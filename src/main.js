@@ -30,7 +30,7 @@ controls.update();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(99, 99);
 const clock = new THREE.Clock();
-const SAVE_KEY = 'leisure-club-tycoon-builder-v5';
+const SAVE_KEY = 'leisure-club-tycoon-builder-v6';
 
 const ui = {
   cash: $('#cash'), members: $('#members'), rating: $('#rating'), rep: $('#rep'), day: $('#day'), clock: $('#clock'),
@@ -62,7 +62,8 @@ const mat = {
   exterior: new THREE.MeshStandardMaterial({ color: C.exterior, roughness: 0.72 }),
   brick: new THREE.MeshStandardMaterial({ color: C.brick, roughness: 0.8 }),
   dark: new THREE.MeshStandardMaterial({ color: C.dark, roughness: 0.55 }),
-  glass: new THREE.MeshPhysicalMaterial({ color: C.glass, roughness: 0.03, transparent: true, opacity: 0.42, transmission: 0.25 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: C.glass, roughness: 0.03, transparent: true, opacity: 0.46, transmission: 0.25 }),
+  frostedGlass: new THREE.MeshPhysicalMaterial({ color: 0xd9fbff, roughness: 0.42, transparent: true, opacity: 0.68, transmission: 0.05 }),
   doorGlass: new THREE.MeshPhysicalMaterial({ color: C.glass, roughness: 0.08, transparent: true, opacity: 0.62, transmission: 0.18 }),
   wood: new THREE.MeshStandardMaterial({ color: C.wood, roughness: 0.72 }),
   metal: new THREE.MeshStandardMaterial({ color: 0xc9d2da, roughness: 0.32, metalness: 0.24 }),
@@ -114,16 +115,16 @@ const wallTypes = [
 ];
 
 const openingTypes = [
-  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', thickness:.12, height:2.25, desc:'A passable interior door.' },
-  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:220, kind:'door', blocks:false, material:'doorGlass', thickness:.08, height:2.45, desc:'Premium double door, passable.' },
-  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', thickness:.075, height:2.35, desc:'Passable glass sliding door.' },
-  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:190, kind:'door', blocks:false, material:'wood', thickness:.16, height:2.5, desc:'Open arched pass-through.' },
-  { id:'windowPanel', name:'Standard Window', emoji:'🪟', cost:160, kind:'window', blocks:true, material:'glass', thickness:.08, sill:.55, glassH:1.55, top:.24, desc:'Taller standard window panel.' },
-  { id:'wideWindow', name:'Wide Picture Window', emoji:'▭', cost:220, kind:'window', blocks:true, material:'glass', thickness:.075, sill:.42, glassH:1.75, top:.2, wide:true, desc:'Wider, taller premium glass window.' },
-  { id:'fullHeightWindow', name:'Full-Height Glass', emoji:'▯', cost:280, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.1, glassH:2.25, top:.08, desc:'Almost floor-to-ceiling glass panel.' },
-  { id:'frostedSpaWindow', name:'Frosted Spa Window', emoji:'🧊', cost:240, kind:'window', blocks:true, material:'glass', tint:'frosted', thickness:.075, sill:.85, glassH:1.35, top:.32, desc:'Privacy window for spa/changing areas.' },
-  { id:'poolWindow', name:'Pool Viewing Window', emoji:'🌊', cost:290, kind:'window', blocks:true, material:'glass', tint:'pool', thickness:.075, sill:.25, glassH:1.95, top:.16, desc:'Tall blue-tinted viewing window for pool halls.' },
-  { id:'clerestoryWindow', name:'High Clerestory Window', emoji:'▔', cost:180, kind:'window', blocks:true, material:'glass', thickness:.07, sill:1.45, glassH:.72, top:.32, desc:'High window strip for privacy and natural light.' }
+  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', thickness:.12, height:2.45, desc:'A passable interior door that fits the frame properly.' },
+  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:220, kind:'door', blocks:false, material:'doorGlass', thickness:.075, height:2.55, desc:'Premium double door, passable.' },
+  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', thickness:.07, height:2.5, desc:'Passable glass sliding door.' },
+  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:190, kind:'door', blocks:false, material:'wood', thickness:.16, height:2.55, desc:'Open arched pass-through with no broken circular cap.' },
+  { id:'windowPanel', name:'Standard Window', emoji:'🪟', cost:160, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.55, glassH:1.78, top:.22, desc:'Tall standard window panel with edge-to-edge glass.' },
+  { id:'wideWindow', name:'Wide Picture Window', emoji:'▭', cost:220, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.42, glassH:1.91, top:.22, wide:true, desc:'Wide premium window with glass to the outside frame.' },
+  { id:'fullHeightWindow', name:'Full-Height Glass Window', emoji:'▯', cost:280, kind:'window', blocks:true, material:'glass', thickness:.06, sill:.1, glassH:2.27, top:.18, full:true, desc:'Floor-to-ceiling glass with only an outside border, so rows flow cleanly.' },
+  { id:'frostedSpaWindow', name:'Frosted Spa Window', emoji:'🧊', cost:240, kind:'window', blocks:true, material:'glass', tint:'frosted', thickness:.065, sill:.7, glassH:1.63, top:.22, desc:'Privacy spa window, taller and wider in its frame.' },
+  { id:'poolWindow', name:'Pool Viewing Window', emoji:'🌊', cost:290, kind:'window', blocks:true, material:'glass', tint:'pool', thickness:.065, sill:.25, glassH:2.08, top:.22, desc:'Tall blue-tinted viewing window for pool halls.' },
+  { id:'clerestoryWindow', name:'High Clerestory Window', emoji:'▔', cost:180, kind:'window', blocks:true, material:'glass', thickness:.065, sill:1.45, glassH:.88, top:.22, desc:'High window strip that reaches close to the side frames.' }
 ];
 
 const itemDefs = {
@@ -223,6 +224,7 @@ let isDragging = false;
 let pathCacheVersion = 0;
 let lastRouteCheck = 0;
 let simAcc = 0;
+const keyState = new Set();
 
 initLights();
 buildEnvironment();
@@ -351,7 +353,14 @@ function wireEvents(){
   renderer.domElement.addEventListener('pointermove',onPointerMove);
   renderer.domElement.addEventListener('pointerup',onPointerUp);
   renderer.domElement.addEventListener('pointerleave',()=>{ pointerDown=null; isDragging=false; });
-  window.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='r') rotate(); if(e.key.toLowerCase()==='b') toggleBulldoze(); if(e.key==='Escape'||e.key.toLowerCase()==='q') deselect(); });
+  window.addEventListener('keydown',e=>{
+    const k=e.key.toLowerCase();
+    if(['w','a','s','d','shift'].includes(k)) keyState.add(k);
+    if(k==='r') rotate();
+    if(k==='b') toggleBulldoze();
+    if(e.key==='Escape'||k==='q') deselect();
+  });
+  window.addEventListener('keyup',e=>{ keyState.delete(e.key.toLowerCase()); });
   ui.rotateBtn.addEventListener('click',rotate); ui.mobileRotate.addEventListener('click',rotate);
   ui.deselectBtn.addEventListener('click',deselect); ui.mobileDeselect.addEventListener('click',deselect);
   ui.bulldozeBtn.addEventListener('click',toggleBulldoze); ui.expandBtn.addEventListener('click',expandPlot);
@@ -397,7 +406,12 @@ function refreshPreview(){
   if(state.mode==='edge'){ ok=canPlaceEdge(hovered.x,hovered.z,hovered.dir).ok; ghost=makeEdgePreview(hovered.x,hovered.z,hovered.dir, ok); }
   if(ghost) groups.previews.add(ghost);
 }
-function makeEdgePreview(x,z,dir,ok){ const g=new THREE.Group(); const def=edgeDef(state.selectedId)||{}; const thick=def.thickness||.16; const h=def.kind==='window'?1.8:(def.height||.9); const mesh=box(dir==='h'?1:thick,h,dir==='h'?thick:1,ok?mat.ghostEdge:mat.ghostBad,false); const pos=edgeWorld(x,z,dir); mesh.position.set(pos.x,h/2,pos.z); g.add(mesh); return g; }
+function makeEdgePreview(x,z,dir,ok){
+  const g=new THREE.Group(); const def=edgeDef(state.selectedId)||{}; const thick=def.thickness||.16;
+  const h=def.kind==='window'?2.55:(def.height||.9);
+  const mesh=box(dir==='h'?1:thick,h,dir==='h'?thick:1,ok?mat.ghostEdge:mat.ghostBad,false);
+  const pos=edgeWorld(x,z,dir); mesh.position.set(pos.x,h/2,pos.z); g.add(mesh); return g;
+}
 function edgeWorld(x,z,dir){ return dir==='h' ? new THREE.Vector3(plotOriginX()+x+.5,0,plotOriginZ()+z) : new THREE.Vector3(plotOriginX()+x,0,plotOriginZ()+z+.5); }
 
 function handleClick(){
@@ -446,37 +460,72 @@ function rebuildFloors(){ groups.floors.clear(); state.floors.forEach(f=>{ const
 function addFloorPattern(tile,def,f){ if(['rubberGreen','poolTile','courtWood','kidsFoam','cafeTerrazzo'].includes(def.id)){ const line=box(.92,.01,.035,mat.dark,false); line.position.set(tile.position.x,.151,tile.position.z); line.userData={kind:'floor',id:f.id}; groups.floors.add(line); } }
 function rebuildEdges(){ groups.edges.clear(); state.edges.forEach(e=>{ const model=makeEdgeModel(e); groups.edges.add(model); }); }
 function makeEdgeModel(e){
-  const def=edgeDef(e.type); const g=new THREE.Group(); const pos=edgeWorld(e.x,e.z,e.dir); const h=def.height||2.45; const thick=def.thickness||.18; const material=mat[def.material]||mat.wall;
-  const wallDims=e.dir==='h'?[1,thick]:[thick,1];
+  const def=edgeDef(e.type); const g=new THREE.Group(); const pos=edgeWorld(e.x,e.z,e.dir);
+  const h=def.height||2.55; const thick=def.thickness||.16; const material=mat[def.material]||mat.wall;
+  const along = e.dir==='h' ? 'x' : 'z';
+  const across = e.dir==='h' ? 'z' : 'x';
+  const mk=(len,hh,dep,material,y,off=0)=>{
+    const m=box(e.dir==='h'?len:dep, hh, e.dir==='h'?dep:len, material, true);
+    m.position.set(pos.x, y, pos.z); m.position[along]+=off; return m;
+  };
+
   if(def.kind==='door'){
-    const postMat=e.type.includes('Glass')||e.type==='slidingDoor'?mat.metal:mat.exterior;
-    const post1=box(e.dir==='h'?.11:thick,h,e.dir==='h'?thick:.11,postMat,true); const post2=post1.clone();
-    if(e.dir==='h'){ post1.position.set(pos.x-.45,h/2,pos.z); post2.position.set(pos.x+.45,h/2,pos.z); } else { post1.position.set(pos.x,h/2,pos.z-.45); post2.position.set(pos.x,h/2,pos.z+.45); }
-    const lintel=box(e.dir==='h'?1:thick,.18,e.dir==='h'?thick:1,postMat,true); lintel.position.set(pos.x,h-.09,pos.z); g.add(post1,post2,lintel);
+    const frameMat=(e.type==='doubleDoor'||e.type==='slidingDoor')?mat.metal:mat.exterior;
+    const postDepth=Math.max(thick,.12);
+    g.add(mk(.08,h,postDepth,frameMat,h/2,-.47));
+    g.add(mk(.08,h,postDepth,frameMat,h/2,.47));
+    g.add(mk(1.0,.16,postDepth,frameMat,h-.08,0));
+
     if(e.type==='archedDoor'){
-      const arch=cylinder(.48,.48,.08,postMat); arch.rotation.set(Math.PI/2,0,e.dir==='h'?Math.PI/2:0); arch.position.set(pos.x,h-.35,pos.z); g.add(arch);
-    } else {
-      const leafW=e.type==='singleDoor'?.52:.76; const leaf=box(e.dir==='h'?leafW:.06,1.78,e.dir==='h'?.06:leafW,material,true); leaf.position.set(pos.x,.96,pos.z); g.add(leaf);
-      const handle=cylinder(.035,.035,.08,mat.gold); handle.rotation.x=Math.PI/2; handle.position.set(pos.x+(e.dir==='h'?leafW*.28:.04),.96,pos.z+(e.dir==='h'?.04:leafW*.28)); g.add(handle);
+      // Built from small arch blocks rather than a disk/circle, so it faces the doorway correctly.
+      const archPieces=[[-.34,2.05,.18],[-.18,2.27,.18],[0,2.36,.22],[.18,2.27,.18],[.34,2.05,.18]];
+      archPieces.forEach(([off,y,hh])=>g.add(mk(.16,hh,postDepth,frameMat,y,off)));
+    } else if(e.type==='singleDoor'){
+      const leaf=mk(.62,1.92,.045,material,.96,0);
+      leaf.position[across]+=.025; g.add(leaf);
+      g.add(mk(.04,1.92,.055,mat.metal,.96,-.33));
+      g.add(mk(.04,1.92,.055,mat.metal,.96,.33));
+      const handle=cylinder(.03,.03,.075,mat.gold); handle.rotation.x=Math.PI/2; handle.position.set(pos.x,.98,pos.z); handle.position[along]+=.2; handle.position[across]+=.055; g.add(handle);
+    } else if(e.type==='doubleDoor'){
+      const left=mk(.42,2.05,.04,mat.doorGlass,1.03,-.22); const right=mk(.42,2.05,.04,mat.doorGlass,1.03,.22);
+      left.position[across]+=.025; right.position[across]+=.025; g.add(left,right);
+      g.add(mk(.035,2.08,.055,mat.metal,1.04,0));
+      [-.12,.12].forEach(off=>{ const hdl=cylinder(.025,.025,.08,mat.gold); hdl.rotation.x=Math.PI/2; hdl.position.set(pos.x,1.02,pos.z); hdl.position[along]+=off; hdl.position[across]+=.06; g.add(hdl); });
+    } else if(e.type==='slidingDoor'){
+      g.add(mk(.88,.07,.08,mat.metal,2.22,0));
+      const rear=mk(.48,1.95,.035,mat.doorGlass,.98,-.18); rear.position[across]-=.02;
+      const front=mk(.48,1.95,.035,mat.doorGlass,.98,.18); front.position[across]+=.04;
+      g.add(rear,front);
+      g.add(mk(.035,1.95,.055,mat.metal,.98,.0));
     }
   } else if(def.kind==='window'){
-    const sill=def.sill ?? .55, glassH=def.glassH ?? 1.45, top=def.top ?? .25;
+    const totalH=2.55;
+    const sill=def.sill ?? .55, top=def.top ?? .22;
+    const glassH=Math.max(.25, Math.min(def.glassH ?? 1.78, totalH-sill-top));
+    const glassW=def.full?.96:(def.wide?.98:.94);
     const frameMat=def.tint==='pool'?mat.blue:def.tint==='frosted'?mat.wall:mat.metal;
-    const glassMat=def.tint==='pool'?mat.water:material;
-    const bottom=box(e.dir==='h'?1:thick,sill,e.dir==='h'?thick:1,mat.wall,true); bottom.position.set(pos.x,sill/2,pos.z); g.add(bottom);
-    const glassW=def.wide?.98:.86;
-    const glass=box(e.dir==='h'?glassW:thick*.65,glassH,e.dir==='h'?thick*.65:glassW,glassMat,true); glass.position.set(pos.x,sill+glassH/2,pos.z); g.add(glass);
-    const railA=box(e.dir==='h'?1.02:thick*.9,.065,e.dir==='h'?thick*.9:1.02,frameMat,true); railA.position.set(pos.x,sill,pos.z); const railB=railA.clone(); railB.position.y=sill+glassH; g.add(railA,railB);
-    const mullion=box(e.dir==='h'?.045:thick*.72,glassH,e.dir==='h'?thick*.72:.045,frameMat,true); mullion.position.set(pos.x,sill+glassH/2,pos.z); g.add(mullion);
-    if(top>0){ const cap=box(e.dir==='h'?1:thick,top,e.dir==='h'?thick:1,mat.wall,true); cap.position.set(pos.x,sill+glassH+top/2,pos.z); g.add(cap); }
+    const glassMat=def.tint==='pool'?mat.water:(def.tint==='frosted'?mat.frostedGlass:material);
+    const glassDepth=Math.max(.035, thick*.58);
+
+    if(sill>0){ g.add(mk(1,sill,thick,mat.wall,sill/2,0)); }
+    if(top>0){ g.add(mk(1,top,thick,mat.wall,sill+glassH+top/2,0)); }
+
+    const glass=mk(glassW,glassH,glassDepth,glassMat,sill+glassH/2,0); glass.position[across]+=.002; g.add(glass);
+    // outside frame only: allows a row of windows/full-height glass to flow without a centre bar.
+    g.add(mk(1.0,.055,thick*.9,frameMat,sill,0));
+    g.add(mk(1.0,.055,thick*.9,frameMat,sill+glassH,0));
+    g.add(mk(.045,glassH+.09,thick*.9,frameMat,sill+glassH/2,-.5+.022));
+    g.add(mk(.045,glassH+.09,thick*.9,frameMat,sill+glassH/2,.5-.022));
   } else {
-    const wall=box(wallDims[0],h,wallDims[1],material,true); wall.position.set(pos.x,h/2,pos.z); g.add(wall);
-    if(def.mullions){ const m1=box(e.dir==='h'?.04:thick*.9,h*.88,e.dir==='h'?thick*.9:.04,mat.metal,true); m1.position.set(pos.x-.28,h*.48,pos.z); const m2=m1.clone(); if(e.dir==='h') m2.position.x=pos.x+.28; else m2.position.z=pos.z+.28; g.add(m1,m2); }
+    const wall=mk(1,h,thick,material,h/2,0); g.add(wall);
+    if(def.mullions){
+      const m1=mk(.035,h*.88,thick*.75,mat.metal,h*.48,-.28); const m2=mk(.035,h*.88,thick*.75,mat.metal,h*.48,.28); g.add(m1,m2);
+    }
   }
   g.traverse(o=>{ if(o.isMesh){ o.userData={kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g;
 }
 
-function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.155,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
+function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.142,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
 function rebuildStaff(){ groups.staff.clear(); let idx=0; Object.entries(state.staff).forEach(([id,count])=>{ for(let n=0;n<count;n++){ const s=makeStaffFigure(id); const x=buildOffsetX()+1+(idx%5); const z=buildOffsetZ()+1+Math.floor(idx/5); const p=tileToWorld(x,z); s.position.set(p.x,.16,p.z); groups.staff.add(s); idx++; }}); }
 
 // Item models: no built-in floor plates, just equipment/furniture.
@@ -495,19 +544,113 @@ function makeLegPress(){ const g=new THREE.Group(); g.add(box(1.0,.26,.66,mat.ru
 function makeWeightBench(){ const g=new THREE.Group(); g.add(box(.54,.18,1.2,mat.red,true).positioned(0,.25,0)); g.add(box(.5,.16,.42,mat.red,true).rotated(.35,0,0).positioned(0,.35,-.42)); [-.18,.18].forEach(x=>g.add(cylinder(.035,.035,.46,mat.metal).positioned(x,.12,.25))); return g; }
 function makePlateTree(){ const g=new THREE.Group(); g.add(cylinder(.045,.045,.92,mat.metal).positioned(0,.46,0)); for(let i=0;i<5;i++) g.add(cylinder(.15+.03*i,.15+.03*i,.055,mat.rubber).rotated(0,0,Math.PI/2).positioned(i%2?-.24:.24,.22+i*.12,0)); g.add(cylinder(.18,.22,.08,mat.metal).positioned(0,.04,0)); return g; }
 function makeTreadmill(){ const g=new THREE.Group(); g.add(box(.76,.15,1.3,mat.rubber,true).positioned(0,.12,.06)); g.add(box(.58,.045,.86,mat.dark,true).positioned(0,.22,.12)); [-.32,.32].forEach(x=>g.add(cylinder(.025,.025,.7,mat.metal).positioned(x,.5,-.46))); g.add(box(.78,.1,.08,mat.metal,true).positioned(0,.82,-.48)); g.add(box(.42,.24,.05,mat.glass,true).positioned(0,.94,-.53)); return g; }
-function makeSpinBike(){ const g=new THREE.Group(); g.add(cylinder(.22,.22,.05,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.24,0)); g.add(cylinder(.2,.2,.05,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.24,.45)); g.add(cylinder(.035,.035,.58,mat.metal).rotated(.25,0,0).positioned(0,.48,.18)); g.add(box(.45,.08,.22,mat.rubber,true).positioned(0,.68,.26)); g.add(box(.52,.05,.08,mat.metal,true).positioned(0,.84,-.28)); return g; }
-function makeRower(){ const g=new THREE.Group(); g.add(box(.36,.08,1.38,mat.metal,true).positioned(0,.13,0)); g.add(box(.42,.14,.28,mat.rubber,true).positioned(0,.27,.25)); g.add(cylinder(.18,.18,.08,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.18,-.58)); g.add(cylinder(.02,.02,.78,mat.metal).rotated(Math.PI/2,0,0).positioned(0,.43,-.18)); return g; }
-function makeCrossTrainer(){ const g=new THREE.Group(); g.add(box(.58,.09,1.05,mat.metal,true).positioned(0,.1,0)); [-.2,.2].forEach(x=>{ g.add(cylinder(.024,.024,1.0,mat.metal).positioned(x,.55,-.18)); g.add(box(.14,.05,.65,mat.rubber,true).positioned(x,.22,.2)); }); g.add(box(.6,.08,.08,mat.rubber,true).positioned(0,.62,.35)); g.add(box(.36,.18,.05,mat.glass,true).positioned(0,.78,-.42)); return g; }
-function makeStairClimber(){ const g=new THREE.Group(); for(let i=0;i<5;i++) g.add(box(.68,.075,.18,mat.rubber,true).positioned(0,.08+i*.11,.25-i*.14)); g.add(box(.68,.9,.08,mat.metal,true).positioned(0,.58,-.42)); g.add(box(.34,.16,.05,mat.glass,true).positioned(0,.88,-.48)); return g; }
+function makeSpinBike(){
+  const g=new THREE.Group();
+  [-.34,.34].forEach(x=>g.add(box(.06,.05,.86,mat.metal,true).positioned(x,.04,.08)));
+  g.add(cylinder(.28,.28,.055,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.25,-.34));
+  g.add(cylinder(.23,.23,.055,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.25,.42));
+  g.add(cylinder(.035,.035,.92,mat.metal).rotated(.55,0,0).positioned(0,.48,.06));
+  g.add(cylinder(.03,.03,.62,mat.metal).rotated(-.35,0,0).positioned(0,.66,-.2));
+  g.add(box(.42,.08,.28,mat.rubber,true).positioned(0,.72,.24));
+  g.add(box(.72,.055,.09,mat.metal,true).positioned(0,.9,-.46));
+  g.add(box(.08,.2,.08,mat.gold,true).positioned(0,.44,-.05));
+  [-.28,.28].forEach(x=>g.add(cylinder(.04,.04,.18,mat.rubber).rotated(0,0,Math.PI/2).positioned(x,.34,-.03)));
+  return g;
+}
+function makeRower(){
+  const g=new THREE.Group();
+  g.add(box(.18,.075,1.55,mat.metal,true).positioned(0,.08,0));
+  g.add(box(.62,.07,.12,mat.metal,true).positioned(0,.08,.68));
+  g.add(box(.46,.14,.32,mat.rubber,true).positioned(0,.22,.26));
+  g.add(cylinder(.23,.23,.12,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.22,-.68));
+  g.add(box(.42,.34,.18,mat.dark,true).positioned(0,.28,-.62));
+  g.add(cylinder(.018,.018,.78,mat.metal).rotated(Math.PI/2,0,0).positioned(0,.42,-.16));
+  g.add(box(.55,.045,.08,mat.metal,true).positioned(0,.42,.18));
+  [-.22,.22].forEach(x=>g.add(box(.18,.035,.45,mat.rubber,true).positioned(x,.05,.14)));
+  return g;
+}
+function makeCrossTrainer(){
+  const g=new THREE.Group();
+  g.add(box(.72,.08,1.18,mat.metal,true).positioned(0,.04,0));
+  [-.26,.26].forEach((x,i)=>{
+    g.add(box(.18,.055,.82,mat.rubber,true).positioned(x,.12,.18));
+    g.add(cylinder(.026,.026,1.15,mat.metal).rotated(i?-.16:.16,0,0).positioned(x,.66,-.2));
+    g.add(cylinder(.024,.024,.85,mat.metal).rotated(i?.28:-.28,0,0).positioned(x,.74,.25));
+  });
+  g.add(cylinder(.035,.035,1.18,mat.metal).positioned(0,.62,-.38));
+  g.add(box(.68,.07,.08,mat.rubber,true).positioned(0,.92,-.42));
+  g.add(box(.36,.2,.055,mat.glass,true).positioned(0,1.05,-.5));
+  return g;
+}
+function makeStairClimber(){
+  const g=new THREE.Group();
+  g.add(box(.78,.08,.95,mat.metal,true).positioned(0,.04,0));
+  for(let i=0;i<6;i++) g.add(box(.68,.075,.2,mat.rubber,true).positioned(0,.09+i*.1,.36-i*.13));
+  [-.34,.34].forEach(x=>g.add(cylinder(.025,.025,1.0,mat.metal).positioned(x,.58,-.43)));
+  g.add(box(.78,.06,.08,mat.rubber,true).positioned(0,.95,-.44));
+  g.add(box(.38,.18,.055,mat.glass,true).positioned(0,1.08,-.51));
+  g.add(box(.72,.18,.08,mat.dark,true).positioned(0,.2,-.46));
+  return g;
+}
 function makeYogaMat(){ const g=new THREE.Group(); g.add(box(.82,.035,.82,mat.purple,false).positioned(0,.018,0)); g.add(cylinder(.05,.05,.78,mat.teal).rotated(0,0,Math.PI/2).positioned(0,.07,-.32)); return g; }
-function makeReformer(){ const g=new THREE.Group(); g.add(box(.64,.16,1.36,mat.wood,true).positioned(0,.08,0)); g.add(box(.44,.12,.44,mat.rubber,true).positioned(0,.22,.28)); g.add(cylinder(.025,.025,.72,mat.metal).rotated(0,0,Math.PI/2).positioned(0,.39,-.5)); [-.26,.26].forEach(x=>g.add(cylinder(.018,.018,.85,mat.metal).positioned(x,.24,0))); return g; }
+function makeReformer(){
+  const g=new THREE.Group();
+  g.add(box(.74,.12,1.52,mat.wood,true).positioned(0,.06,0));
+  g.add(box(.52,.12,.52,mat.rubber,true).positioned(0,.2,.32));
+  g.add(box(.48,.08,.32,mat.rubber,true).positioned(0,.22,-.42));
+  [-.3,.3].forEach(x=>{
+    g.add(cylinder(.018,.018,1.38,mat.metal).positioned(x,.24,0));
+    g.add(cylinder(.016,.016,.62,mat.metal).rotated(0,0,Math.PI/2).positioned(x*.25,.46,-.62));
+  });
+  g.add(box(.72,.05,.08,mat.metal,true).positioned(0,.48,-.66));
+  g.add(cylinder(.025,.025,.44,mat.gold).positioned(-.32,.34,-.62));
+  g.add(cylinder(.025,.025,.44,mat.gold).positioned(.32,.34,-.62));
+  return g;
+}
 function makeMirror(){ const g=new THREE.Group(); g.add(box(.86,1.45,.035,mat.glass,true).positioned(0,.72,0)); g.add(box(.94,.06,.045,mat.metal,true).positioned(0,1.46,0)); g.add(box(.94,.06,.045,mat.metal,true).positioned(0,-.02,0)); return g; }
-function makeSpeaker(){ const g=new THREE.Group(); g.add(box(.44,.88,.38,mat.dark,true).positioned(0,.44,0)); g.add(cylinder(.14,.14,.04,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.6,-.21)); g.add(cylinder(.08,.08,.04,mat.gold).rotated(Math.PI/2,0,0).positioned(0,.3,-.21)); return g; }
+function makeSpeaker(){
+  const g=new THREE.Group();
+  g.add(box(.56,1.05,.44,mat.dark,true).positioned(0,.52,0));
+  g.add(box(.62,.08,.48,mat.metal,true).positioned(0,1.08,0));
+  g.add(cylinder(.18,.18,.045,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.72,-.24));
+  g.add(cylinder(.1,.1,.045,mat.gold).rotated(Math.PI/2,0,0).positioned(0,.38,-.24));
+  g.add(box(.26,.05,.05,mat.glass,true).positioned(0,.95,-.25));
+  [-.2,.2].forEach(x=>g.add(cylinder(.035,.035,.16,mat.metal).positioned(x,.08,0)));
+  return g;
+}
 function makePoolLane(){ const g=new THREE.Group(); const baseW=6, baseH=2; g.add(box(baseW-.05,.22,baseH-.05,mat.stone,true).positioned(0,.11,0)); g.add(box(baseW-.38,.12,baseH-.38,mat.water,false).positioned(0,.25,0)); for(let z=-.45; z<=.45; z+=.9) g.add(box(baseW-.65,.035,.035,mat.kerb,false).positioned(0,.34,z)); [-2.6,2.6].forEach(x=>g.add(cylinder(.035,.035,.55,mat.metal).rotated(0,0,Math.PI/2).positioned(x,.45,.78))); return g; }
 function makeJacuzzi(){ const g=new THREE.Group(); g.add(cylinder(.94,.98,.34,mat.stone).positioned(0,.17,0)); g.add(cylinder(.72,.75,.12,mat.water).positioned(0,.38,0)); for(let i=0;i<8;i++) g.add(cylinder(.035,.035,.02,mat.glass).positioned(Math.cos(i)*.5,.46,Math.sin(i)*.5)); return g; }
-function makeSaunaCabin(){ const g=new THREE.Group(); g.add(box(1.68,1.3,1.55,mat.wood,true).positioned(0,.65,0)); for(let x=-.5;x<=.5;x+=.5) g.add(box(.04,1.2,.04,mat.dark,true).positioned(x,.66,-.79)); g.add(box(.55,.9,.045,mat.glass,true).positioned(0,.58,-.79)); g.add(box(1.2,.18,.38,mat.wood,true).positioned(0,.25,.35)); return g; }
-function makeSteamRoom(){ const g=new THREE.Group(); g.add(box(1.58,1.28,1.58,mat.glass,true).positioned(0,.64,0)); g.add(box(.48,.22,.48,mat.stone,true).positioned(-.45,.11,.35)); for(let i=0;i<4;i++) g.add(cylinder(.04,.04,.35,mat.water).positioned(.3+i*.08,.55,.45)); return g; }
-function makeShowerPod(){ const g=new THREE.Group(); g.add(cylinder(.24,.24,.08,mat.stone).positioned(0,.04,0)); g.add(cylinder(.025,.025,1.08,mat.metal).positioned(0,.54,.18)); g.add(cylinder(.13,.13,.045,mat.metal).positioned(0,1.08,.15)); g.add(box(.42,1.0,.035,mat.glass,true).positioned(0,.5,-.22)); return g; }
+function makeSaunaCabin(){
+  const g=new THREE.Group();
+  g.add(box(1.72,1.42,1.58,mat.wood,true).positioned(0,.71,0));
+  for(let x=-.72;x<=.72;x+=.24) g.add(box(.025,1.34,.035,mat.dark,true).positioned(x,.72,-.81));
+  g.add(box(.6,1.02,.045,mat.glass,true).positioned(0,.62,-.84));
+  g.add(box(1.35,.18,.38,mat.wood,true).positioned(0,.28,.4));
+  g.add(box(1.35,.16,.34,mat.wood,true).positioned(0,.58,.52));
+  g.add(cylinder(.18,.22,.16,mat.stone).positioned(-.54,.24,-.15));
+  for(let i=0;i<5;i++) g.add(cylinder(.045,.045,.035,mat.dark).positioned(-.61+i*.04,.36,-.14+i*.03));
+  return g;
+}
+function makeSteamRoom(){
+  const g=new THREE.Group();
+  g.add(box(1.62,1.34,1.62,mat.frostedGlass,true).positioned(0,.67,0));
+  g.add(box(1.68,.08,1.68,mat.stone,true).positioned(0,.04,0));
+  g.add(box(.54,1.05,.04,mat.doorGlass,true).positioned(.5,.62,-.84));
+  [-.72,0,.72].forEach(x=>g.add(box(.035,1.25,.035,mat.metal,true).positioned(x,.68,-.84)));
+  g.add(box(.56,.22,.56,mat.stone,true).positioned(-.45,.18,.36));
+  for(let i=0;i<6;i++){ const puff=new THREE.Mesh(new THREE.SphereGeometry(.06+.01*(i%2),12,8),mat.water); puff.position.set(.25+i*.09,.62+i*.04,.42); puff.castShadow=false; g.add(puff); }
+  return g;
+}
+function makeShowerPod(){
+  const g=new THREE.Group();
+  g.add(cylinder(.32,.34,.08,mat.stone).positioned(0,.04,0));
+  g.add(box(.68,1.18,.035,mat.glass,true).positioned(0,.6,-.34));
+  g.add(cylinder(.025,.025,1.15,mat.metal).positioned(.24,.58,.14));
+  g.add(cylinder(.16,.16,.045,mat.metal).positioned(.24,1.15,.12));
+  for(let i=0;i<5;i++) g.add(cylinder(.012,.012,.28,mat.water).positioned(.14+i*.05,.92,.1));
+  g.add(box(.18,.08,.08,mat.gold,true).positioned(-.22,.68,-.36));
+  return g;
+}
 function makeTreatmentBed(){ const g=new THREE.Group(); g.add(box(.7,.22,1.38,mat.wall,true).positioned(0,.11,0)); g.add(box(.38,.14,.28,mat.green,true).positioned(0,.29,-.43)); g.add(cylinder(.05,.05,.75,mat.gold).positioned(-.45,.38,.45)); g.add(box(.22,.1,.22,mat.gold,true).positioned(-.45,.77,.45)); return g; }
 function makePlanter(){ const g=new THREE.Group(); g.add(cylinder(.24,.3,.35,mat.wood).positioned(0,.17,0)); for(let i=0;i<9;i++) g.add(box(.12,.42,.04,mat.green,true).rotated(.45,i*.7,0).positioned(Math.cos(i)*.18,.45+Math.random()*.08,Math.sin(i)*.18)); return g; }
 function makeWaterFeature(){ const g=new THREE.Group(); g.add(cylinder(.88,.92,.24,mat.stone).positioned(0,.12,0)); g.add(cylinder(.58,.58,.08,mat.water).positioned(0,.29,0)); g.add(cylinder(.08,.1,.65,mat.stone).positioned(0,.55,0)); g.add(cylinder(.32,.02,.42,mat.water).positioned(0,.9,0)); return g; }
@@ -600,34 +743,95 @@ function updateVisitorUse(v,dt){
   let mult=.8+state.rating/100; if(['freeweights','cardio','studio'].includes(def.cat)) mult+=state.staff.instructor*.05; if(def.cat==='poolspa') mult+=state.staff.lifeguard*.04+state.staff.therapist*.05;
   state.cash+=Math.round(def.income*mult); target.visits++; target.condition=clamp(target.condition-(.35+Math.random()*.35)/(1+state.staff.cleaner*.25),35,100);
   v.using=false; resetVisitorPose(v);
-  if(Math.random()<.42){ v.leaving=true; const start=entranceCell(); const cur=worldToTile(v.mesh.position); v.path=findPath(cur,start)||[cur,start]; v.pathIndex=0; }
-  else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; const cur=worldToTile(v.mesh.position); v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
+  if(Math.random()<.42){ v.leaving=true; const start=entranceCell(); const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z; v.path=findPath(cur,start)||[cur,start]; v.pathIndex=0; }
+  else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z; v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
 }
 function resetVisitorPose(v){
   const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id;
-  v.mesh.scale.set(1,1,1); v.mesh.position.y=.155;
+  v.mesh.scale.set(1,1,1); v.mesh.rotation.x=0; v.mesh.rotation.z=0; v.mesh.position.y=.155;
   p.body.rotation.set(0,0,0); p.head.rotation.set(0,0,0);
   p.armL.rotation.set(Math.sin(t)*.45,0,.18); p.armR.rotation.set(-Math.sin(t)*.45,0,-.18);
   p.legL.rotation.set(-Math.sin(t)*.35,0,0); p.legR.rotation.set(Math.sin(t)*.35,0,0);
 }
-function poseVisitorUsing(v,item,def){
-  const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id;
-  const itemCenter=tileToWorld(item.x,item.z,item.w,item.h); v.mesh.lookAt(itemCenter.x,v.mesh.position.y,itemCenter.z);
-  v.mesh.position.y=.155;
+function itemWorldPoint(item,lx=0,lz=0){
+  const c=tileToWorld(item.x,item.z,item.w,item.h); const a=item.rot*Math.PI/2; const ca=Math.cos(a), sa=Math.sin(a);
+  return { x:c.x + lx*ca + lz*sa, z:c.z - lx*sa + lz*ca };
+}
+function setVisitorOnItem(v,item,lx=0,lz=0,angleOffset=0,y=.155){
+  const p=itemWorldPoint(item,lx,lz); v.mesh.position.x=p.x; v.mesh.position.z=p.z; v.mesh.position.y=y; v.mesh.rotation.set(0,item.rot*Math.PI/2+angleOffset,0);
+}
+function neutralUsePose(v){
+  const p=v.mesh.userData.parts; if(!p) return;
+  v.mesh.scale.set(1,1,1); v.mesh.rotation.x=0; v.mesh.rotation.z=0;
   p.body.rotation.set(0,0,0); p.head.rotation.set(0,0,0);
-  p.armL.rotation.set(0,0,.7); p.armR.rotation.set(0,0,-.7); p.legL.rotation.set(0,0,0); p.legR.rotation.set(0,0,0);
-  if(def.cat==='cardio'){
-    p.armL.rotation.x=Math.sin(t*2)*.65; p.armR.rotation.x=-Math.sin(t*2)*.65; p.legL.rotation.x=-Math.sin(t*2)*.75; p.legR.rotation.x=Math.sin(t*2)*.75; v.mesh.position.y=.155+Math.abs(Math.sin(t*2))*.025;
-  } else if(def.cat==='freeweights'){
-    p.armL.rotation.set(-1.15+Math.sin(t*1.8)*.25,0,.35); p.armR.rotation.set(-1.15+Math.sin(t*1.8)*.25,0,-.35); p.body.rotation.x=.1;
-  } else if(def.cat==='studio'){
-    v.mesh.scale.set(1.05,.72,1.05); p.armL.rotation.set(0,0,1.25); p.armR.rotation.set(0,0,-1.25); p.legL.rotation.set(.55,0,.25); p.legR.rotation.set(.55,0,-.25);
-  } else if(def.cat==='poolspa' && item.type==='poolLane'){
-    v.mesh.position.y=.24+Math.sin(t*2)*.015; v.mesh.scale.set(1.15,.55,1.15); p.armL.rotation.x=Math.sin(t*3)*1.1; p.armR.rotation.x=-Math.sin(t*3)*1.1;
-  } else if(def.cat==='poolspa'){
-    v.mesh.scale.set(1,.85,1); p.armL.rotation.set(0,0,.95); p.armR.rotation.set(0,0,-.95);
-  } else if(def.cat==='clubhouse'){
-    v.mesh.scale.set(1,.9,1); p.armL.rotation.set(-.55,0,.55); p.armR.rotation.set(-.45,0,-.55);
+  p.armL.rotation.set(0,0,.55); p.armR.rotation.set(0,0,-.55); p.legL.rotation.set(0,0,0); p.legR.rotation.set(0,0,0);
+}
+function poseVisitorUsing(v,item,def){
+  const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id; neutralUsePose(v);
+
+  if(item.type==='treadmill'){
+    setVisitorOnItem(v,item,0,.1,0,.18);
+    p.armL.rotation.x=Math.sin(t*2.8)*.75; p.armR.rotation.x=-Math.sin(t*2.8)*.75;
+    p.legL.rotation.x=-Math.sin(t*2.8)*.95; p.legR.rotation.x=Math.sin(t*2.8)*.95;
+    v.mesh.position.y=.17+Math.abs(Math.sin(t*2.8))*.035; return;
+  }
+  if(item.type==='spinBike'){
+    setVisitorOnItem(v,item,0,.18,0,.18); v.mesh.scale.set(1,.78,1);
+    p.body.rotation.x=.12; p.armL.rotation.set(-.75,0,.35); p.armR.rotation.set(-.75,0,-.35);
+    p.legL.rotation.x=Math.sin(t*3)*.9; p.legR.rotation.x=-Math.sin(t*3)*.9; return;
+  }
+  if(item.type==='rower'){
+    setVisitorOnItem(v,item,0,.22,0,.16); v.mesh.scale.set(1,.72,1);
+    p.body.rotation.x=.22+Math.sin(t*1.8)*.18;
+    p.armL.rotation.set(-1.0+Math.sin(t*1.8)*.45,0,.35); p.armR.rotation.set(-1.0+Math.sin(t*1.8)*.45,0,-.35);
+    p.legL.rotation.x=.65-Math.sin(t*1.8)*.25; p.legR.rotation.x=.65-Math.sin(t*1.8)*.25; return;
+  }
+  if(item.type==='crossTrainer'){
+    setVisitorOnItem(v,item,0,.05,0,.17);
+    p.armL.rotation.x=Math.sin(t*2)*.95; p.armR.rotation.x=-Math.sin(t*2)*.95;
+    p.legL.rotation.x=-Math.sin(t*2)*.65; p.legR.rotation.x=Math.sin(t*2)*.65; return;
+  }
+  if(item.type==='stairClimber'){
+    setVisitorOnItem(v,item,0,.05,0,.25);
+    p.body.rotation.x=.08; p.legL.rotation.x=Math.sin(t*2.5)*.8; p.legR.rotation.x=-Math.sin(t*2.5)*.8;
+    p.armL.rotation.set(-.55,0,.45); p.armR.rotation.set(-.55,0,-.45); return;
+  }
+  if(item.type==='benchPress'){
+    setVisitorOnItem(v,item,0,.26,0,.28); v.mesh.scale.set(1.12,.42,1.12);
+    p.body.rotation.x=Math.PI/2; p.head.rotation.x=.25;
+    p.armL.rotation.set(-1.4+Math.sin(t*2)*.28,0,.35); p.armR.rotation.set(-1.4+Math.sin(t*2)*.28,0,-.35);
+    p.legL.rotation.x=.2; p.legR.rotation.x=.2; return;
+  }
+  if(item.type==='weightBench'){
+    setVisitorOnItem(v,item,0,0,0,.25); v.mesh.scale.set(1.05,.55,1.05); p.body.rotation.x=.85; p.armL.rotation.set(-.9,0,.6); p.armR.rotation.set(-.9,0,-.6); return;
+  }
+  if(['dumbbellRack','squatRack','cableMachine','legPress','plateTree'].includes(item.type)){
+    setVisitorOnItem(v,item,0, item.h>.9 ? .3 : .15,0,.17);
+    p.armL.rotation.set(-1.15+Math.sin(t*1.8)*.35,0,.45); p.armR.rotation.set(-1.15+Math.sin(t*1.8)*.35,0,-.45); p.body.rotation.x=.08; return;
+  }
+  if(item.type==='yogaMat'){
+    setVisitorOnItem(v,item,0,0,0,.18); v.mesh.scale.set(1.1,.58,1.1);
+    p.armL.rotation.set(0,0,1.35); p.armR.rotation.set(0,0,-1.35); p.legL.rotation.set(.75,0,.35); p.legR.rotation.set(.75,0,-.35); return;
+  }
+  if(item.type==='reformer'){
+    setVisitorOnItem(v,item,0,.08,0,.25); v.mesh.scale.set(1.08,.42,1.08); p.body.rotation.x=Math.PI/2;
+    p.armL.rotation.set(-.7+Math.sin(t*1.7)*.18,0,.38); p.armR.rotation.set(-.7+Math.sin(t*1.7)*.18,0,-.38); p.legL.rotation.x=.35; p.legR.rotation.x=.35; return;
+  }
+  if(item.type==='poolLane'){
+    setVisitorOnItem(v,item,0,0,0,.31); v.mesh.scale.set(1.25,.48,1.25); p.body.rotation.x=Math.PI/2;
+    p.armL.rotation.x=Math.sin(t*3)*1.1; p.armR.rotation.x=-Math.sin(t*3)*1.1; p.legL.rotation.x=-Math.sin(t*3)*.55; p.legR.rotation.x=Math.sin(t*3)*.55; return;
+  }
+  if(item.type==='jacuzzi' || item.type==='saunaCabin' || item.type==='steamRoom'){
+    setVisitorOnItem(v,item,0,.15,0,.18); v.mesh.scale.set(1,.72,1); p.body.rotation.x=.25; p.armL.rotation.set(0,0,1); p.armR.rotation.set(0,0,-1); p.legL.rotation.x=.65; p.legR.rotation.x=.65; return;
+  }
+  if(item.type==='showerPod'){
+    setVisitorOnItem(v,item,0,.05,0,.17); p.armL.rotation.set(-.9,0,.35); p.armR.rotation.set(-.25,0,-.4); p.head.rotation.x=-.15; return;
+  }
+  if(item.type==='treatmentBed'){
+    setVisitorOnItem(v,item,0,.05,0,.25); v.mesh.scale.set(1.05,.42,1.05); p.body.rotation.x=Math.PI/2; p.armL.rotation.set(0,0,.9); p.armR.rotation.set(0,0,-.9); return;
+  }
+  if(def.cat==='clubhouse'){
+    const itemCenter=tileToWorld(item.x,item.z,item.w,item.h); v.mesh.lookAt(itemCenter.x,v.mesh.position.y,itemCenter.z); v.mesh.scale.set(1,.9,1); p.armL.rotation.set(-.55,0,.55); p.armR.rotation.set(-.45,0,-.55); return;
   }
 }
 function removeVisitor(v){ groups.people.remove(v.mesh); state.visitors=state.visitors.filter(x=>x!==v); }
@@ -668,5 +872,22 @@ function toast(msg){ ui.toast.textContent=msg; ui.toast.classList.remove('hidden
 function saveGame(){ const data={...state, visitors:[]}; localStorage.setItem(SAVE_KEY,JSON.stringify(data)); toast('Game saved in this browser.'); }
 function loadGame(){ const raw=localStorage.getItem(SAVE_KEY); if(!raw){ toast('No save found yet.'); return; } const data=JSON.parse(raw); Object.assign(state,data,{visitors:[]}); nextId=Math.max(1,...state.floors.map(f=>f.id+1),...state.edges.map(e=>e.id+1),...state.items.map(i=>i.id+1)); groups.people.clear(); rebuildPlot(); rebuildAll(); updateUi(true); toast('Save loaded.'); }
 
-function animate(){ const dt=Math.min(clock.getDelta(),.05); controls.update(); updateVisitors(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
+function updateCameraMovement(dt){
+  if(!keyState.size) return;
+  const move=new THREE.Vector3();
+  const forward=new THREE.Vector3(); camera.getWorldDirection(forward); forward.y=0; forward.normalize();
+  const right=new THREE.Vector3().crossVectors(forward,new THREE.Vector3(0,1,0)).normalize();
+  if(keyState.has('w')) move.add(forward);
+  if(keyState.has('s')) move.sub(forward);
+  if(keyState.has('d')) move.add(right);
+  if(keyState.has('a')) move.sub(right);
+  if(move.lengthSq()===0) return;
+  move.normalize().multiplyScalar((keyState.has('shift')?24:13)*dt);
+  camera.position.add(move); controls.target.add(move);
+  const minX=plotOriginX()-18, maxX=-plotOriginX()+18, minZ=plotOriginZ()-16, maxZ=-plotOriginZ()+24;
+  const dx=clamp(controls.target.x,minX,maxX)-controls.target.x;
+  const dz=clamp(controls.target.z,minZ,maxZ)-controls.target.z;
+  if(dx||dz){ camera.position.x+=dx; controls.target.x+=dx; camera.position.z+=dz; controls.target.z+=dz; }
+}
+function animate(){ const dt=Math.min(clock.getDelta(),.05); updateCameraMovement(dt); controls.update(); updateVisitors(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
 function animateWater(){ const t=performance.now()*.001; groups.items.traverse(o=>{ if(o.material===mat.water) o.position.y += Math.sin(t*2)*.0008; }); }
