@@ -7,14 +7,23 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x071521);
 scene.fog = new THREE.Fog(0x071521, 35, 95);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  powerPreference: 'high-performance',
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 200);
+const camera = new THREE.PerspectiveCamera(
+  48,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  200
+);
 camera.position.set(18, 22, 24);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -27,7 +36,7 @@ controls.maxDistance = 58;
 controls.mouseButtons = {
   LEFT: THREE.MOUSE.ROTATE,
   MIDDLE: THREE.MOUSE.DOLLY,
-  RIGHT: THREE.MOUSE.PAN
+  RIGHT: THREE.MOUSE.PAN,
 };
 controls.update();
 
@@ -60,7 +69,7 @@ const ui = {
   loadBtn: $('#loadBtn'),
   resetBtn: $('#resetBtn'),
   mobileRotate: $('#mobileRotate'),
-  mobileCancel: $('#mobileCancel')
+  mobileCancel: $('#mobileCancel'),
 };
 
 const colours = {
@@ -78,7 +87,7 @@ const colours = {
   wood: 0xc98b5a,
   red: 0xff7187,
   water: 0x48caf5,
-  orange: 0xffb45c
+  orange: 0xffb45c,
 };
 
 const mat = {
@@ -100,18 +109,30 @@ const mat = {
     roughness: 0.05,
     transparent: true,
     opacity: 0.76,
-    transmission: 0.12
+    transmission: 0.12,
   }),
   glass: new THREE.MeshPhysicalMaterial({
     color: 0xa8f4ff,
     roughness: 0.02,
     transparent: true,
     opacity: 0.34,
-    transmission: 0.25
+    transmission: 0.25,
   }),
-  ghostGood: new THREE.MeshStandardMaterial({ color: 0x8effde, transparent: true, opacity: 0.44 }),
-  ghostBad: new THREE.MeshStandardMaterial({ color: 0xff6a82, transparent: true, opacity: 0.44 }),
-  shadow: new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16 })
+  ghostGood: new THREE.MeshStandardMaterial({
+    color: 0x8effde,
+    transparent: true,
+    opacity: 0.44,
+  }),
+  ghostBad: new THREE.MeshStandardMaterial({
+    color: 0xff6a82,
+    transparent: true,
+    opacity: 0.44,
+  }),
+  shadow: new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.16,
+  }),
 };
 
 const facilities = {
@@ -126,7 +147,7 @@ const facilities = {
     upkeep: 2,
     colour: 'teal',
     desc: 'Check-in desk. Your club needs this before members take it seriously.',
-    unlock: () => true
+    unlock: () => true,
   },
   cardio: {
     name: 'Cardio Suite',
@@ -139,7 +160,7 @@ const facilities = {
     upkeep: 7,
     colour: 'blue',
     desc: 'Treadmills, spin bikes and a mirrored cardio zone.',
-    unlock: () => has('reception')
+    unlock: () => has('reception'),
   },
   weights: {
     name: 'Free Weights',
@@ -152,7 +173,7 @@ const facilities = {
     upkeep: 8,
     colour: 'orange',
     desc: 'Benches, racks and strength equipment for serious members.',
-    unlock: () => has('reception')
+    unlock: () => has('reception'),
   },
   studio: {
     name: 'Wellness Studio',
@@ -165,7 +186,7 @@ const facilities = {
     upkeep: 5,
     colour: 'purple',
     desc: 'Yoga, pilates and class space. Great for ratings.',
-    unlock: () => state.reputation >= 2 || has('cardio')
+    unlock: () => state.reputation >= 2 || has('cardio'),
   },
   locker: {
     name: 'Changing Room',
@@ -178,7 +199,7 @@ const facilities = {
     upkeep: 5,
     colour: 'gold',
     desc: 'Supports bigger membership and reduces complaints.',
-    unlock: () => has('reception')
+    unlock: () => has('reception'),
   },
   juice: {
     name: 'Juice Bar',
@@ -191,7 +212,7 @@ const facilities = {
     upkeep: 6,
     colour: 'pink',
     desc: 'Members spend extra after workouts. Adds a social club feel.',
-    unlock: () => state.reputation >= 4 || count('cardio') + count('weights') >= 2
+    unlock: () => state.reputation >= 4 || count('cardio') + count('weights') >= 2,
   },
   pool: {
     name: 'Pool Lane',
@@ -204,7 +225,7 @@ const facilities = {
     upkeep: 18,
     colour: 'water',
     desc: 'Premium leisure-club anchor. Expensive, but transforms the vibe.',
-    unlock: () => state.reputation >= 7 || state.cash >= 5200
+    unlock: () => state.reputation >= 7 || state.cash >= 5200,
   },
   sauna: {
     name: 'Sauna & Steam',
@@ -217,7 +238,7 @@ const facilities = {
     upkeep: 11,
     colour: 'wood',
     desc: 'Heat rooms for the spa/wellness experience.',
-    unlock: () => state.reputation >= 6 || has('pool')
+    unlock: () => state.reputation >= 6 || has('pool'),
   },
   spa: {
     name: 'Spa Room',
@@ -230,7 +251,7 @@ const facilities = {
     upkeep: 10,
     colour: 'green',
     desc: 'Treatment tables, warm lighting and luxury rating boost.',
-    unlock: () => state.reputation >= 9 || has('sauna')
+    unlock: () => state.reputation >= 9 || has('sauna'),
   },
   plant: {
     name: 'Plant Decor',
@@ -243,8 +264,8 @@ const facilities = {
     upkeep: 0,
     colour: 'green',
     desc: 'Cheap decor boost that fills dead space nicely.',
-    unlock: () => true
-  }
+    unlock: () => true,
+  },
 };
 
 const objectives = [
@@ -253,7 +274,7 @@ const objectives = [
   { text: 'Build cardio and weights', done: () => has('cardio') && has('weights') },
   { text: 'Add pool, sauna or spa', done: () => has('pool') || has('sauna') || has('spa') },
   { text: 'Reach 80% club rating', done: () => state.rating >= 80 },
-  { text: 'Expand the plot once', done: () => state.expansions >= 1 }
+  { text: 'Expand the plot once', done: () => state.expansions >= 1 },
 ];
 
 const state = {
@@ -272,7 +293,7 @@ const state = {
   deleteMode: false,
   facilities: [],
   visitors: [],
-  lastIncome: 0
+  lastIncome: 0,
 };
 
 const groups = {
@@ -280,7 +301,7 @@ const groups = {
   grid: new THREE.Group(),
   club: new THREE.Group(),
   people: new THREE.Group(),
-  deco: new THREE.Group()
+  deco: new THREE.Group(),
 };
 
 scene.add(groups.floor, groups.grid, groups.club, groups.people, groups.deco);
@@ -332,11 +353,11 @@ function centreZ() {
 }
 
 function has(type) {
-  return state.facilities.some(f => f.type === type);
+  return state.facilities.some((f) => f.type === type);
 }
 
 function count(type) {
-  return state.facilities.filter(f => f.type === type).length;
+  return state.facilities.filter((f) => f.type === type).length;
 }
 
 function definition(type) {
@@ -355,7 +376,7 @@ function tileToWorld(x, z, w = 1, h = 1) {
 function worldToTile(point) {
   return {
     x: Math.floor(point.x - centreX()),
-    z: Math.floor(point.z - centreZ())
+    z: Math.floor(point.z - centreZ()),
   };
 }
 
@@ -419,7 +440,7 @@ function rebuildFloor() {
     [state.width + 0.25, 0.35, 0.18, 0, 0.17, centreZ() - 0.1],
     [state.width + 0.25, 0.35, 0.18, 0, 0.17, -centreZ() + 0.1],
     [0.18, 0.35, state.height + 0.25, centreX() - 0.1, 0.17, 0],
-    [0.18, 0.35, state.height + 0.25, -centreX() + 0.1, 0.17, 0]
+    [0.18, 0.35, state.height + 0.25, -centreX() + 0.1, 0.17, 0],
   ];
 
   rails.forEach(([w, h, d, x, y, z]) => {
@@ -435,7 +456,7 @@ function rebuildGrid() {
   const lineMat = new THREE.LineBasicMaterial({
     color: colours.line,
     transparent: true,
-    opacity: 0.2
+    opacity: 0.2,
   });
 
   const points = [];
@@ -486,7 +507,7 @@ function makeBuildMenu() {
 }
 
 function refreshBuildButtons() {
-  [...ui.buildMenu.querySelectorAll('.facility-btn')].forEach(btn => {
+  [...ui.buildMenu.querySelectorAll('.facility-btn')].forEach((btn) => {
     const type = btn.dataset.type;
     btn.classList.toggle('active', state.selectedType === type && !state.deleteMode);
     btn.classList.toggle('locked', !definition(type).unlock(state));
@@ -508,7 +529,7 @@ function wireEvents() {
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerdown', onPointerDown);
 
-  window.addEventListener('keydown', e => {
+  window.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'r') rotateBlueprint();
     if (e.key.toLowerCase() === 'b') toggleBulldoze();
 
@@ -587,15 +608,15 @@ function updateHover() {
 
     hoveredTile = {
       x: clamp(t.x, 0, state.width - w),
-      z: clamp(t.z, 0, state.height - h)
+      z: clamp(t.z, 0, state.height - h),
     };
   }
 
   const hitMeshes = raycaster.intersectObjects(groups.club.children, true);
-  const hit = hitMeshes.find(h => h.object.userData.facilityId);
+  const hit = hitMeshes.find((h) => h.object.userData.facilityId);
 
   if (hit) {
-    hoveredFacility = state.facilities.find(f => f.id === hit.object.userData.facilityId) || null;
+    hoveredFacility = state.facilities.find((f) => f.id === hit.object.userData.facilityId) || null;
   }
 
   if (!ghost) return;
@@ -696,7 +717,7 @@ function placeFacility(type, x, z, rot) {
     h,
     rot,
     visits: 0,
-    condition: 100
+    condition: 100,
   };
 
   state.cash -= def.cost;
@@ -717,7 +738,7 @@ function bulldoze(facility) {
 
   state.cash += Math.round(def.cost * 0.35);
   groups.club.remove(facility.model);
-  state.facilities = state.facilities.filter(f => f.id !== facility.id);
+  state.facilities = state.facilities.filter((f) => f.id !== facility.id);
   selectedFacility = null;
 
   updateUi(true);
@@ -764,7 +785,7 @@ function buildFacilityModel(facility) {
   if (facility.type === 'spa') makeSpa(g);
   if (facility.type === 'plant') makePlant(g);
 
-  g.traverse(o => {
+  g.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
       o.receiveShadow = true;
@@ -790,7 +811,7 @@ function makeReception(g) {
 }
 
 function makeCardio(g) {
-  [-1.25, 0, 1.25].forEach(x => {
+  [-1.25, 0, 1.25].forEach((x) => {
     const base = box(0.85, 0.12, 1.05, mat.dark, true);
     base.position.set(x, 0.38, 0.18);
     g.add(base);
@@ -814,7 +835,7 @@ function makeCardio(g) {
 }
 
 function makeWeights(g) {
-  [-1.15, 1.15].forEach(x => {
+  [-1.15, 1.15].forEach((x) => {
     const bench = box(1.0, 0.16, 0.42, mat.red, true);
     bench.position.set(x, 0.48, 0.35);
     g.add(bench);
@@ -828,7 +849,7 @@ function makeWeights(g) {
     bar.position.set(x, 0.95, -0.35);
     g.add(bar);
 
-    [-0.65, 0.65].forEach(dx => {
+    [-0.65, 0.65].forEach((dx) => {
       const plate = cylinder(0.18, 0.18, 0.08, mat.dark);
       plate.rotation.z = Math.PI / 2;
       plate.position.set(x + dx, 0.95, -0.35);
@@ -853,7 +874,7 @@ function makeStudio(g, f) {
 }
 
 function makeLocker(g) {
-  [-0.85, 0, 0.85].forEach(x => {
+  [-0.85, 0, 0.85].forEach((x) => {
     const locker = box(0.55, 1.05, 0.42, mat.gold, true);
     locker.position.set(x, 0.82, -0.5);
     g.add(locker);
@@ -893,7 +914,7 @@ function makePool(g, f) {
   pool.position.set(0, 0.36, 0);
   g.add(pool);
 
-  [-0.9, 0.9].forEach(z => {
+  [-0.9, 0.9].forEach((z) => {
     const lane = box(f.w - 0.75, 0.035, 0.035, mat.wall, false);
     lane.position.set(0, 0.45, z);
     g.add(lane);
@@ -920,7 +941,7 @@ function makeSauna(g) {
 }
 
 function makeSpa(g) {
-  [-0.65, 0.65].forEach(x => {
+  [-0.65, 0.65].forEach((x) => {
     const bed = box(0.9, 0.22, 1.45, mat.wall, true);
     bed.position.set(x, 0.5, 0.2);
     g.add(bed);
@@ -977,7 +998,12 @@ function makeTextSprite(text) {
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
 
-  return new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+  return new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+    })
+  );
 }
 
 function box(w, h, d, material, cast = true) {
@@ -998,7 +1024,7 @@ function spawnVisitor() {
   if (!has('reception')) return;
   if (state.visitors.length >= Math.min(55, Math.max(6, Math.floor(state.members / 2)))) return;
 
-  const usable = state.facilities.filter(f => definition(f.type).capacity > 0);
+  const usable = state.facilities.filter((f) => definition(f.type).capacity > 0);
   if (!usable.length) return;
 
   const target = usable[Math.floor(Math.random() * usable.length)];
@@ -1014,7 +1040,7 @@ function spawnVisitor() {
     targetId: target.id,
     speed: 1.5 + Math.random() * 0.8,
     spendTimer: 0,
-    leaving: false
+    leaving: false,
   });
 }
 
@@ -1045,7 +1071,7 @@ function makePerson() {
 
 function updateVisitors(dt) {
   for (const v of [...state.visitors]) {
-    const target = state.facilities.find(f => f.id === v.targetId);
+    const target = state.facilities.find((f) => f.id === v.targetId);
 
     if (!target) {
       removeVisitor(v);
@@ -1081,7 +1107,7 @@ function updateVisitors(dt) {
         v.leaving = Math.random() < 0.35;
 
         if (!v.leaving) {
-          const choices = state.facilities.filter(f => definition(f.type).capacity > 0);
+          const choices = state.facilities.filter((f) => definition(f.type).capacity > 0);
           v.targetId = choices[Math.floor(Math.random() * choices.length)].id;
           v.spendTimer = 0;
         }
@@ -1092,7 +1118,7 @@ function updateVisitors(dt) {
 
 function removeVisitor(v) {
   groups.people.remove(v.mesh);
-  state.visitors = state.visitors.filter(x => x !== v);
+  state.visitors = state.visitors.filter((x) => x !== v);
 }
 
 let simAccumulator = 0;
@@ -1104,7 +1130,7 @@ function updateSimulation(dt) {
     state.minute -= 24 * 60;
     state.day += 1;
     state.lastIncome = 0;
-    state.facilities.forEach(f => {
+    state.facilities.forEach((f) => {
       f.visits = 0;
     });
   }
@@ -1117,7 +1143,7 @@ function updateSimulation(dt) {
     const cap = state.facilities.reduce((sum, f) => sum + definition(f.type).capacity, 0);
     const appeal = state.facilities.reduce((sum, f) => sum + definition(f.type).appeal, 0);
     const upkeep = state.facilities.reduce((sum, f) => sum + definition(f.type).upkeep, 0);
-    const variety = new Set(state.facilities.map(f => f.type)).size;
+    const variety = new Set(state.facilities.map((f) => f.type)).size;
     const luxury = clamp(appeal * 1.8 + variety * 2, 0, 100);
     const conditionAverage = state.facilities.length
       ? state.facilities.reduce((s, f) => s + f.condition, 0) / state.facilities.length
@@ -1127,7 +1153,11 @@ function updateSimulation(dt) {
 
     state.rating = Math.round(
       clamp(
-        42 + luxury * 0.42 + state.cleanliness * 0.22 + variety * 1.4 - Math.max(0, state.members - cap) * 0.4,
+        42 +
+          luxury * 0.42 +
+          state.cleanliness * 0.22 +
+          variety * 1.4 -
+          Math.max(0, state.members - cap) * 0.4,
         15,
         99
       )
@@ -1137,12 +1167,13 @@ function updateSimulation(dt) {
       ? Math.floor(8 + cap * 2.15 + state.rating * 0.58 + state.reputation * 2.6)
       : 0;
 
-    state.members += Math.sign(targetMembers - state.members) * Math.min(2, Math.abs(targetMembers - state.members));
+    state.members +=
+      Math.sign(targetMembers - state.members) * Math.min(2, Math.abs(targetMembers - state.members));
 
     state.reputation = Math.floor((state.rating - 45) / 7 + state.facilities.length * 0.75 + state.expansions * 2);
     state.reputation = Math.max(0, state.reputation);
 
-    state.facilities.forEach(f => {
+    state.facilities.forEach((f) => {
       f.condition = clamp(f.condition - definition(f.type).upkeep * 0.002, 30, 100);
     });
 
@@ -1162,7 +1193,9 @@ function updateUi(full = false) {
   ui.rating.textContent = `${Math.round(state.rating)}%`;
   ui.rep.textContent = String(Math.max(0, state.reputation));
   ui.day.textContent = String(state.day);
-  ui.clock.textContent = `${String(Math.floor(state.minute / 60)).padStart(2, '0')}:${String(Math.floor(state.minute % 60)).padStart(2, '0')}`;
+  ui.clock.textContent = `${String(Math.floor(state.minute / 60)).padStart(2, '0')}:${String(
+    Math.floor(state.minute % 60)
+  ).padStart(2, '0')}`;
 
   ui.cleanText.textContent = `${Math.round(state.cleanliness)}%`;
   ui.cleanBar.style.width = `${state.cleanliness}%`;
@@ -1195,7 +1228,7 @@ function updateUi(full = false) {
 
 function renderObjectives() {
   ui.objectives.innerHTML = objectives
-    .map(o => `<li class="${o.done() ? 'done' : ''}">${o.done() ? '✓' : '○'} ${o.text}</li>`)
+    .map((o) => `<li class="${o.done() ? 'done' : ''}">${o.done() ? '✓' : '○'} ${o.text}</li>`)
     .join('');
 }
 
@@ -1213,7 +1246,7 @@ function saveGame() {
     facilities: state.facilities.map(({ model, ...f }) => f),
     visitors: [],
     selectedType: state.selectedType,
-    rotation: state.rotation
+    rotation: state.rotation,
   };
 
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -1235,12 +1268,12 @@ function loadGame() {
 
   Object.assign(state, data, {
     visitors: [],
-    deleteMode: false
+    deleteMode: false,
   });
 
-  nextFacilityId = Math.max(1, ...state.facilities.map(f => f.id + 1));
+  nextFacilityId = Math.max(1, ...state.facilities.map((f) => f.id + 1));
 
-  state.facilities.forEach(f => {
+  state.facilities.forEach((f) => {
     f.model = buildFacilityModel(f);
     groups.club.add(f.model);
   });
@@ -1269,7 +1302,7 @@ function animate() {
 function animateWaterAndSigns() {
   const t = performance.now() * 0.001;
 
-  groups.club.traverse(o => {
+  groups.club.traverse((o) => {
     if (o.material === mat.water) {
       o.position.y += Math.sin(t * 2) * 0.0008;
     }
