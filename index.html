@@ -9,12 +9,13 @@
     <div id="app">
       <canvas id="game"></canvas>
       <div id="vignette"></div>
+
       <aside id="hud" class="panel glass">
         <div class="brand">
           <div class="brand-icon">LC</div>
           <div>
             <h1>Leisure Club Tycoon</h1>
-            <p>Build a premium gym, spa & wellness club.</p>
+            <p>Build rooms, hire staff and grow a premium wellness club.</p>
           </div>
         </div>
 
@@ -31,16 +32,17 @@
 
         <section>
           <div class="section-title">
-            <h2>Build</h2>
-            <span id="selectedHint">Select a facility</span>
+            <h2>Build / Hire</h2>
+            <span id="selectedHint">Inspect mode</span>
           </div>
           <div id="buildMenu" class="build-menu"></div>
         </section>
 
         <section class="actions">
           <button id="rotateBtn" class="secondary">Rotate</button>
+          <button id="cancelBtn" class="secondary">Deselect</button>
           <button id="deleteBtn" class="secondary">Bulldoze</button>
-          <button id="expandBtn">Expand Plot</button>
+          <button id="expandBtn">Expand</button>
         </section>
 
         <section class="actions compact">
@@ -52,15 +54,27 @@
 
       <aside id="inspector" class="panel glass">
         <h2 id="inspectTitle">Welcome</h2>
-        <p id="inspectBody">Start by placing reception, then add cardio, weights, pool, sauna, studio and a juice bar. Members will visit, spend money and rate the club.</p>
+        <p id="inspectBody">
+          Build rooms with walls, glass, doors and floor tiles. Then place facilities,
+          hire staff and grow your leisure club rating.
+        </p>
+
         <div class="progress">
-          <div class="progress-label"><span>Cleanliness</span><strong id="cleanText">100%</strong></div>
+          <div class="progress-label">
+            <span>Cleanliness</span>
+            <strong id="cleanText">100%</strong>
+          </div>
           <div class="bar"><i id="cleanBar"></i></div>
         </div>
+
         <div class="progress">
-          <div class="progress-label"><span>Luxury Feel</span><strong id="luxuryText">0%</strong></div>
+          <div class="progress-label">
+            <span>Luxury Feel</span>
+            <strong id="luxuryText">0%</strong>
+          </div>
           <div class="bar"><i id="luxuryBar"></i></div>
         </div>
+
         <div class="objective-card">
           <h3>Objectives</h3>
           <ul id="objectives"></ul>
@@ -68,11 +82,13 @@
       </aside>
 
       <div id="toast" class="toast hidden"></div>
+
       <div id="mobileControls" class="mobile-controls">
         <button id="mobileRotate">↻</button>
         <button id="mobileCancel">×</button>
       </div>
     </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
