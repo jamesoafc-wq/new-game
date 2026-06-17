@@ -30,7 +30,7 @@ controls.update();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(99, 99);
 const clock = new THREE.Clock();
-const SAVE_KEY = 'leisure-club-tycoon-builder-v3';
+const SAVE_KEY = 'leisure-club-tycoon-builder-v5';
 
 const ui = {
   cash: $('#cash'), members: $('#members'), rating: $('#rating'), rep: $('#rep'), day: $('#day'), clock: $('#clock'),
@@ -106,21 +106,24 @@ const floorTypes = [
 ].map(([id,name,emoji,cost,color,desc]) => ({ id,name,emoji,cost,color,desc, category:'floors' }));
 
 const wallTypes = [
-  { id:'solidWall', name:'Internal Wall', emoji:'🧱', cost:95, kind:'wall', blocks:true, material:'wall', desc:'Plain interior wall segment.' },
-  { id:'exteriorWall', name:'Exterior Wall', emoji:'🏢', cost:135, kind:'wall', blocks:true, material:'exterior', desc:'Thicker exterior wall for the building shell.' },
-  { id:'brickWall', name:'Feature Brick Wall', emoji:'🧱', cost:150, kind:'wall', blocks:true, material:'brick', desc:'Warm brick feature wall.' },
-  { id:'glassWall', name:'Glass Wall', emoji:'🪟', cost:185, kind:'wall', blocks:true, material:'glass', desc:'Premium glazed wall segment.' },
-  { id:'lowDivider', name:'Low Divider', emoji:'▁', cost:70, kind:'wall', blocks:false, material:'dark', height:0.75, desc:'Low divider that people can route around/through.' }
+  { id:'solidWall', name:'Internal Wall', emoji:'🧱', cost:95, kind:'wall', blocks:true, material:'wall', thickness:.18, height:2.45, desc:'Plain interior wall segment.' },
+  { id:'exteriorWall', name:'Exterior Wall', emoji:'🏢', cost:135, kind:'wall', blocks:true, material:'exterior', thickness:.24, height:2.75, desc:'Thicker exterior wall for the building shell.' },
+  { id:'brickWall', name:'Feature Brick Wall', emoji:'🧱', cost:150, kind:'wall', blocks:true, material:'brick', thickness:.20, height:2.55, desc:'Warm brick feature wall.' },
+  { id:'glassWall', name:'Slim Glass Wall', emoji:'🪟', cost:185, kind:'wall', blocks:true, material:'glass', thickness:.085, height:2.65, mullions:true, desc:'Thin premium glazed wall segment. Slimmer than solid walls so equipment can sit tighter beside it.' },
+  { id:'lowDivider', name:'Low Divider', emoji:'▁', cost:70, kind:'wall', blocks:false, material:'dark', thickness:.13, height:.82, desc:'Low divider that people can route through.' }
 ];
 
 const openingTypes = [
-  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', desc:'A passable interior door.' },
-  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:220, kind:'door', blocks:false, material:'doorGlass', desc:'Premium double door, passable.' },
-  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', desc:'Passable glass sliding door.' },
-  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:190, kind:'door', blocks:false, material:'wood', desc:'Open arched pass-through.' },
-  { id:'windowPanel', name:'Window Panel', emoji:'🪟', cost:160, kind:'window', blocks:true, material:'glass', desc:'Window set into a wall edge; blocks movement.' },
-  { id:'wideWindow', name:'Wide Window', emoji:'▭', cost:220, kind:'window', blocks:true, material:'glass', desc:'Wide premium glass window.' },
-  { id:'poolWindow', name:'Pool Viewing Window', emoji:'🌊', cost:260, kind:'window', blocks:true, material:'glass', desc:'Large blue-tinted viewing window.' }
+  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', thickness:.12, height:2.25, desc:'A passable interior door.' },
+  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:220, kind:'door', blocks:false, material:'doorGlass', thickness:.08, height:2.45, desc:'Premium double door, passable.' },
+  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', thickness:.075, height:2.35, desc:'Passable glass sliding door.' },
+  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:190, kind:'door', blocks:false, material:'wood', thickness:.16, height:2.5, desc:'Open arched pass-through.' },
+  { id:'windowPanel', name:'Standard Window', emoji:'🪟', cost:160, kind:'window', blocks:true, material:'glass', thickness:.08, sill:.55, glassH:1.55, top:.24, desc:'Taller standard window panel.' },
+  { id:'wideWindow', name:'Wide Picture Window', emoji:'▭', cost:220, kind:'window', blocks:true, material:'glass', thickness:.075, sill:.42, glassH:1.75, top:.2, wide:true, desc:'Wider, taller premium glass window.' },
+  { id:'fullHeightWindow', name:'Full-Height Glass', emoji:'▯', cost:280, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.1, glassH:2.25, top:.08, desc:'Almost floor-to-ceiling glass panel.' },
+  { id:'frostedSpaWindow', name:'Frosted Spa Window', emoji:'🧊', cost:240, kind:'window', blocks:true, material:'glass', tint:'frosted', thickness:.075, sill:.85, glassH:1.35, top:.32, desc:'Privacy window for spa/changing areas.' },
+  { id:'poolWindow', name:'Pool Viewing Window', emoji:'🌊', cost:290, kind:'window', blocks:true, material:'glass', tint:'pool', thickness:.075, sill:.25, glassH:1.95, top:.16, desc:'Tall blue-tinted viewing window for pool halls.' },
+  { id:'clerestoryWindow', name:'High Clerestory Window', emoji:'▔', cost:180, kind:'window', blocks:true, material:'glass', thickness:.07, sill:1.45, glassH:.72, top:.32, desc:'High window strip for privacy and natural light.' }
 ];
 
 const itemDefs = {
@@ -197,7 +200,7 @@ const objectives = [
 const state = {
   cash: 18000, members: 0, rating: 54, reputation: 0, day: 1, minute: 6*60,
   cleanliness: 100, routeScore: 100, luxury: 0,
-  buildW: 24, buildH: 18, maxW: 48, maxH: 36, expansions: 0,
+  buildW: 26, buildH: 18, maxW: 56, maxH: 44, expansions: 0,
   mode: 'floor', category: 'floors', selectedId: 'concrete', rotation: 0, bulldoze: false,
   floors: [], edges: [], items: [], visitors: [], staff: { receptionist:0, cleaner:0, instructor:0, lifeguard:0, therapist:0 }
 };
@@ -239,7 +242,7 @@ function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 function plotOriginX(){ return -state.maxW / 2; }
 function plotOriginZ(){ return -state.maxH / 2; }
 function buildOffsetX(){ return Math.floor((state.maxW - state.buildW) / 2); }
-function buildOffsetZ(){ return Math.floor((state.maxH - state.buildH) / 2); }
+function buildOffsetZ(){ return 0; } // starter plot is pinned to the front edge; expansions grow backwards
 function isUnlockedCell(x,z){ const ox=buildOffsetX(), oz=buildOffsetZ(); return x>=ox && z>=oz && x<ox+state.buildW && z<oz+state.buildH; }
 function tileToWorld(x,z,w=1,h=1){ return new THREE.Vector3(plotOriginX()+x+w/2, 0, plotOriginZ()+z+h/2); }
 function worldToTile(p){ return { x:Math.floor(p.x - plotOriginX()), z:Math.floor(p.z - plotOriginZ()) }; }
@@ -264,14 +267,15 @@ function initLights(){
 
 function buildEnvironment(){
   groups.env.clear();
-  const grass = box(150,0.12,130,mat.grass,false); grass.position.y=-0.08; groups.env.add(grass);
-  addRoad(0,-36,150,10); addRoad(-36,0,10,130); addRoad(40,0,8,130);
-  addPath(0, -24, 24, 3); addPath(-15, -18, 3, 18); addPath(18, -18, 3, 16);
-  makeTownBuilding(-54,-30,8,7,5,0xd8c4aa); makeTownBuilding(-45,27,10,8,7,0xc4ced8); makeTownBuilding(49,30,12,9,8,0xd7bfa2); makeTownBuilding(55,-15,10,7,6,0xbecbd0); makeTownBuilding(5,45,18,7,6,0xcfc4b2); makeTownBuilding(-20,43,14,8,7,0xbcd2c7);
-  for(let i=0;i<46;i++) makeTree(-65 + Math.random()*130, -58 + Math.random()*116, 0.8+Math.random()*0.7);
-  for(let i=0;i<12;i++) makeStreetLight(-30+i*5.5, -30.5);
-  for(let i=0;i<8;i++) makeCar(-22+i*6, -38.5, i%3);
-  makePlotSign(-18, -27.5);
+  const grass = box(170,0.12,145,mat.grass,false); grass.position.y=-0.08; groups.env.add(grass);
+  addRoad(0,-40,170,10); addRoad(-44,0,10,145); addRoad(48,0,8,145);
+  addPath(0, -29, 30, 3.2); addPath(-18, -24, 3, 22); addPath(21, -23, 3, 20);
+  makeTownBuilding(-62,-32,9,7,5,0xd8c4aa); makeTownBuilding(-52,31,10,8,7,0xc4ced8); makeTownBuilding(56,32,12,9,8,0xd7bfa2); makeTownBuilding(62,-16,10,7,6,0xbecbd0); makeTownBuilding(5,52,18,7,6,0xcfc4b2); makeTownBuilding(-25,50,14,8,7,0xbcd2c7);
+  for(let i=0;i<58;i++) makeTree(-78 + Math.random()*156, -64 + Math.random()*128, 0.8+Math.random()*0.7);
+  for(let i=0;i<15;i++) makeStreetLight(-40+i*5.8, -34.5);
+  for(let i=0;i<10;i++) makeCar(-31+i*6.4, -42.5, i%3);
+  makePlotSign(-19, -32.2);
+  const entry=box(8,.05,3.4,mat.path,false); entry.position.set(0,.045,plotOriginZ()-1.1); groups.env.add(entry);
 }
 
 function addRoad(x,z,w,d){ const road=box(w,0.05,d,mat.road,false); road.position.set(x,-0.01,z); groups.env.add(road); const l1=box(w,0.065,0.14,mat.kerb,false); l1.position.set(x,0.03,z-d/2+0.5); groups.env.add(l1); const l2=box(w,0.065,0.14,mat.kerb,false); l2.position.set(x,0.03,z+d/2-0.5); groups.env.add(l2); }
@@ -285,13 +289,16 @@ function makePlotSign(x,z){ const p1=cylinder(.05,.05,1.2,mat.wood); p1.position
 function rebuildPlot(){
   groups.plot.clear(); groups.grid.clear();
   const full = box(state.maxW,0.1,state.maxH,mat.grass2,false); full.position.set(0,0.005,0); groups.plot.add(full);
-  const unlocked = box(state.buildW,0.035,state.buildH,mat.plot,false); unlocked.position.set(0,0.055,0); groups.plot.add(unlocked);
-  const lockedW = (state.maxW - state.buildW)/2;
-  const lockedH = (state.maxH - state.buildH)/2;
-  if(lockedW>0){ const l=box(lockedW,0.04,state.maxH,mat.plotLocked,false); l.position.set(-state.buildW/2-lockedW/2,.075,0); groups.plot.add(l); const r=l.clone(); r.position.x=state.buildW/2+lockedW/2; groups.plot.add(r); }
-  if(lockedH>0){ const t=box(state.buildW,0.04,lockedH,mat.plotLocked,false); t.position.set(0,.08,-state.buildH/2-lockedH/2); groups.plot.add(t); const b=t.clone(); b.position.z=state.buildH/2+lockedH/2; groups.plot.add(b); }
+  const ox=buildOffsetX(), oz=buildOffsetZ();
+  const unlockedCenter=tileToWorld(ox,oz,state.buildW,state.buildH);
+  const unlocked = box(state.buildW,0.04,state.buildH,mat.plot,false); unlocked.position.set(unlockedCenter.x,0.055,unlockedCenter.z); groups.plot.add(unlocked);
+  // locked land overlays surround the starter footprint. The front edge is intentionally already available so expansion never happens in front of the entrance.
+  addLockedRect(0, 0, ox, state.maxH);
+  addLockedRect(ox+state.buildW, 0, state.maxW-(ox+state.buildW), state.maxH);
+  addLockedRect(ox, oz+state.buildH, state.buildW, state.maxH-(oz+state.buildH));
   rebuildGrid();
 }
+function addLockedRect(x,z,w,h){ if(w<=0||h<=0) return; const c=tileToWorld(x,z,w,h); const r=box(w,0.045,h,mat.plotLocked,false); r.position.set(c.x,.078,c.z); groups.plot.add(r); }
 
 function rebuildGrid(){
   groups.grid.clear();
@@ -359,7 +366,7 @@ function onPointerUp(e){ if(e.button!==0) return; setPointer(e); updateHover(); 
 function rotate(){ state.rotation=(state.rotation+1)%4; refreshPreview(); updateHover(); updateUi(true); }
 function deselect(){ state.selectedId=null; state.bulldoze=false; selectedThing=null; clearGhost(); updateUi(true); }
 function toggleBulldoze(){ state.bulldoze=!state.bulldoze; if(state.bulldoze) clearGhost(); updateUi(true); toast(state.bulldoze?'Bulldoze mode: click floors, walls, doors, windows or items.':'Build mode active.'); }
-function expandPlot(){ const cost=6500+state.expansions*4500; if(state.cash<cost){ toast(`Expansion costs ${money(cost)}.`); return; } if(state.buildW>=state.maxW && state.buildH>=state.maxH){ toast('Plot already fully expanded.'); return; } state.cash-=cost; state.expansions++; state.buildW=Math.min(state.maxW, state.buildW+8); state.buildH=Math.min(state.maxH, state.buildH+6); rebuildPlot(); updateUi(true); toast('Plot expanded. The surrounding land is now buildable.'); }
+function expandPlot(){ const cost=6500+state.expansions*4500; if(state.cash<cost){ toast(`Expansion costs ${money(cost)}.`); return; } if(state.buildW>=state.maxW && state.buildH>=state.maxH){ toast('Plot already fully expanded.'); return; } state.cash-=cost; state.expansions++; state.buildW=Math.min(state.maxW, state.buildW+8); state.buildH=Math.min(state.maxH, state.buildH+6); rebuildPlot(); updateUi(true); toast('Plot expanded sideways/backwards. The front entrance stays on the road side.'); }
 
 function updateHover(){
   raycaster.setFromCamera(pointer,camera);
@@ -385,12 +392,12 @@ function refreshPreview(){
   if(!state.selectedId || state.bulldoze || !hovered) return;
   const def=selectedDef(); if(!def) return;
   let ok=false;
-  if(state.mode==='floor'){ ok=canPlaceFloor(hovered.x,hovered.z); ghost=box(1,.08,1,ok?mat.ghostGood:mat.ghostBad,false); const p=tileToWorld(hovered.x,hovered.z); ghost.position.set(p.x,.18,p.z); }
+  if(state.mode==='floor'){ ok=canPlaceFloor(hovered.x,hovered.z); ghost=box(1.02,.06,1.02,ok?mat.ghostGood:mat.ghostBad,false); const p=tileToWorld(hovered.x,hovered.z); ghost.position.set(p.x,.17,p.z); }
   if(state.mode==='item'){ const [w,h]=rotatedSize(def); ok=canPlaceItem(state.selectedId, hovered.x, hovered.z, state.rotation).ok; ghost=box(w,.35,h,ok?mat.ghostGood:mat.ghostBad,false); const p=tileToWorld(hovered.x,hovered.z,w,h); ghost.position.set(p.x,.35,p.z); ghost.rotation.y=state.rotation*Math.PI/2; }
   if(state.mode==='edge'){ ok=canPlaceEdge(hovered.x,hovered.z,hovered.dir).ok; ghost=makeEdgePreview(hovered.x,hovered.z,hovered.dir, ok); }
   if(ghost) groups.previews.add(ghost);
 }
-function makeEdgePreview(x,z,dir,ok){ const g=new THREE.Group(); const mesh=box(dir==='h'?1:.16,.9,dir==='h'?.16:1,ok?mat.ghostEdge:mat.ghostBad,false); const pos=edgeWorld(x,z,dir); mesh.position.set(pos.x,.52,pos.z); g.add(mesh); return g; }
+function makeEdgePreview(x,z,dir,ok){ const g=new THREE.Group(); const def=edgeDef(state.selectedId)||{}; const thick=def.thickness||.16; const h=def.kind==='window'?1.8:(def.height||.9); const mesh=box(dir==='h'?1:thick,h,dir==='h'?thick:1,ok?mat.ghostEdge:mat.ghostBad,false); const pos=edgeWorld(x,z,dir); mesh.position.set(pos.x,h/2,pos.z); g.add(mesh); return g; }
 function edgeWorld(x,z,dir){ return dir==='h' ? new THREE.Vector3(plotOriginX()+x+.5,0,plotOriginZ()+z) : new THREE.Vector3(plotOriginX()+x,0,plotOriginZ()+z+.5); }
 
 function handleClick(){
@@ -435,59 +442,91 @@ function inspectThing(kind,id){ selectedThing={kind,id}; let title='Selected', b
 }
 
 function rebuildAll(){ rebuildFloors(); rebuildEdges(); rebuildItems(); rebuildStaff(); }
-function rebuildFloors(){ groups.floors.clear(); state.floors.forEach(f=>{ const def=floorDef(f.type); const m=new THREE.MeshStandardMaterial({color:def.color, roughness:.72}); const tile=box(.96,.06,.96,m,false); const p=tileToWorld(f.x,f.z); tile.position.set(p.x,.13,p.z); tile.userData={kind:'floor',id:f.id}; groups.floors.add(tile); addFloorPattern(tile,def,f); }); }
-function addFloorPattern(tile,def,f){ if(['rubberGreen','poolTile','courtWood','kidsFoam','cafeTerrazzo'].includes(def.id)){ const line=box(.72,.012,.05,mat.dark,false); line.position.set(tile.position.x,.17,tile.position.z); line.userData={kind:'floor',id:f.id}; groups.floors.add(line); } }
+function rebuildFloors(){ groups.floors.clear(); state.floors.forEach(f=>{ const def=floorDef(f.type); const m=new THREE.MeshStandardMaterial({color:def.color, roughness:.72}); const tile=box(1.012,.055,1.012,m,false); const p=tileToWorld(f.x,f.z); tile.position.set(p.x,.118,p.z); tile.userData={kind:'floor',id:f.id}; groups.floors.add(tile); addFloorPattern(tile,def,f); }); }
+function addFloorPattern(tile,def,f){ if(['rubberGreen','poolTile','courtWood','kidsFoam','cafeTerrazzo'].includes(def.id)){ const line=box(.92,.01,.035,mat.dark,false); line.position.set(tile.position.x,.151,tile.position.z); line.userData={kind:'floor',id:f.id}; groups.floors.add(line); } }
 function rebuildEdges(){ groups.edges.clear(); state.edges.forEach(e=>{ const model=makeEdgeModel(e); groups.edges.add(model); }); }
-function makeEdgeModel(e){ const def=edgeDef(e.type); const g=new THREE.Group(); const pos=edgeWorld(e.x,e.z,e.dir); const h=def.height||2.45; const d=e.dir==='h'?[1,.18]:[.18,1]; const material=mat[def.material]||mat.wall;
+function makeEdgeModel(e){
+  const def=edgeDef(e.type); const g=new THREE.Group(); const pos=edgeWorld(e.x,e.z,e.dir); const h=def.height||2.45; const thick=def.thickness||.18; const material=mat[def.material]||mat.wall;
+  const wallDims=e.dir==='h'?[1,thick]:[thick,1];
   if(def.kind==='door'){
-    const post1=box(e.dir==='h'?.12:.18,h,e.dir==='h'?.18:.12,mat.exterior,true); const post2=post1.clone();
+    const postMat=e.type.includes('Glass')||e.type==='slidingDoor'?mat.metal:mat.exterior;
+    const post1=box(e.dir==='h'?.11:thick,h,e.dir==='h'?thick:.11,postMat,true); const post2=post1.clone();
     if(e.dir==='h'){ post1.position.set(pos.x-.45,h/2,pos.z); post2.position.set(pos.x+.45,h/2,pos.z); } else { post1.position.set(pos.x,h/2,pos.z-.45); post2.position.set(pos.x,h/2,pos.z+.45); }
-    const lintel=box(e.dir==='h'?1:.18,.18,e.dir==='h'?.18:1,mat.exterior,true); lintel.position.set(pos.x,h-.1,pos.z); g.add(post1,post2,lintel);
-    if(e.type!=='archedDoor'){ const leaf=box(e.dir==='h'?.55:.08,1.55,e.dir==='h'?.08:.55,material,true); leaf.position.set(pos.x,.82,pos.z); g.add(leaf); }
+    const lintel=box(e.dir==='h'?1:thick,.18,e.dir==='h'?thick:1,postMat,true); lintel.position.set(pos.x,h-.09,pos.z); g.add(post1,post2,lintel);
+    if(e.type==='archedDoor'){
+      const arch=cylinder(.48,.48,.08,postMat); arch.rotation.set(Math.PI/2,0,e.dir==='h'?Math.PI/2:0); arch.position.set(pos.x,h-.35,pos.z); g.add(arch);
+    } else {
+      const leafW=e.type==='singleDoor'?.52:.76; const leaf=box(e.dir==='h'?leafW:.06,1.78,e.dir==='h'?.06:leafW,material,true); leaf.position.set(pos.x,.96,pos.z); g.add(leaf);
+      const handle=cylinder(.035,.035,.08,mat.gold); handle.rotation.x=Math.PI/2; handle.position.set(pos.x+(e.dir==='h'?leafW*.28:.04),.96,pos.z+(e.dir==='h'?.04:leafW*.28)); g.add(handle);
+    }
   } else if(def.kind==='window'){
-    const low=box(e.dir==='h'?1:.18,.55,e.dir==='h'?.18:1,mat.wall,true); low.position.set(pos.x,.28,pos.z); const glass=box(e.dir==='h'?.9:.08,1.35,e.dir==='h'?.08:.9,material,true); glass.position.set(pos.x,1.25,pos.z); const top=box(e.dir==='h'?1:.18,.35,e.dir==='h'?.18:1,mat.wall,true); top.position.set(pos.x,2.08,pos.z); g.add(low,glass,top);
+    const sill=def.sill ?? .55, glassH=def.glassH ?? 1.45, top=def.top ?? .25;
+    const frameMat=def.tint==='pool'?mat.blue:def.tint==='frosted'?mat.wall:mat.metal;
+    const glassMat=def.tint==='pool'?mat.water:material;
+    const bottom=box(e.dir==='h'?1:thick,sill,e.dir==='h'?thick:1,mat.wall,true); bottom.position.set(pos.x,sill/2,pos.z); g.add(bottom);
+    const glassW=def.wide?.98:.86;
+    const glass=box(e.dir==='h'?glassW:thick*.65,glassH,e.dir==='h'?thick*.65:glassW,glassMat,true); glass.position.set(pos.x,sill+glassH/2,pos.z); g.add(glass);
+    const railA=box(e.dir==='h'?1.02:thick*.9,.065,e.dir==='h'?thick*.9:1.02,frameMat,true); railA.position.set(pos.x,sill,pos.z); const railB=railA.clone(); railB.position.y=sill+glassH; g.add(railA,railB);
+    const mullion=box(e.dir==='h'?.045:thick*.72,glassH,e.dir==='h'?thick*.72:.045,frameMat,true); mullion.position.set(pos.x,sill+glassH/2,pos.z); g.add(mullion);
+    if(top>0){ const cap=box(e.dir==='h'?1:thick,top,e.dir==='h'?thick:1,mat.wall,true); cap.position.set(pos.x,sill+glassH+top/2,pos.z); g.add(cap); }
   } else {
-    const wall=box(d[0],h,d[1],material,true); wall.position.set(pos.x,h/2,pos.z); g.add(wall);
+    const wall=box(wallDims[0],h,wallDims[1],material,true); wall.position.set(pos.x,h/2,pos.z); g.add(wall);
+    if(def.mullions){ const m1=box(e.dir==='h'?.04:thick*.9,h*.88,e.dir==='h'?thick*.9:.04,mat.metal,true); m1.position.set(pos.x-.28,h*.48,pos.z); const m2=m1.clone(); if(e.dir==='h') m2.position.x=pos.x+.28; else m2.position.z=pos.z+.28; g.add(m1,m2); }
   }
-  g.traverse(o=>{ if(o.isMesh){ o.userData={kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g; }
-function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.16,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
+  g.traverse(o=>{ if(o.isMesh){ o.userData={kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g;
+}
+
+function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.155,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
 function rebuildStaff(){ groups.staff.clear(); let idx=0; Object.entries(state.staff).forEach(([id,count])=>{ for(let n=0;n<count;n++){ const s=makeStaffFigure(id); const x=buildOffsetX()+1+(idx%5); const z=buildOffsetZ()+1+Math.floor(idx/5); const p=tileToWorld(x,z); s.position.set(p.x,.16,p.z); groups.staff.add(s); idx++; }}); }
 
 // Item models: no built-in floor plates, just equipment/furniture.
-function makeReceptionDesk(){ const g=new THREE.Group(); g.add(box(1.7,.72,.55,mat.wood,true).positioned(0,.44,0)); g.add(box(.38,.28,.06,mat.glass,true).positioned(.45,.95,-.18)); g.add(box(.3,.18,.25,mat.metal,true).positioned(-.55,.86,-.12)); return g; }
-function makeTurnstile(){ const g=new THREE.Group(); [-.35,.35].forEach(x=>{ g.add(cylinder(.06,.06,.75,mat.metal).positioned(x,.45,0)); g.add(box(.5,.06,.06,mat.metal,true).positioned(x,.75,0)); }); return g; }
-function makeCafeCounter(){ const g=new THREE.Group(); g.add(box(2.6,.72,.55,mat.pink,true).positioned(0,.44,0)); for(let i=0;i<4;i++) g.add(cylinder(.08,.07,.22,i%2?mat.green:mat.gold).positioned(-.9+i*.55,.92,-.08)); return g; }
-function makeSofa(){ const g=new THREE.Group(); g.add(box(1.7,.32,.62,mat.purple,true).positioned(0,.34,0)); g.add(box(1.75,.62,.16,mat.purple,true).positioned(0,.58,-.27)); return g; }
-function makeLockerBank(){ const g=new THREE.Group(); [-.45,.15,.75].forEach((x,i)=>g.add(box(.5,1.2,.38,i%2?mat.gold:mat.metal,true).positioned(x,.72,0))); return g; }
-function makeBench(){ const g=new THREE.Group(); g.add(box(1.6,.18,.35,mat.wood,true).positioned(0,.38,0)); [-.55,.55].forEach(x=>g.add(cylinder(.04,.04,.45,mat.metal).positioned(x,.19,0))); return g; }
-function makeVending(){ const g=new THREE.Group(); g.add(box(.72,1.4,.48,mat.blue,true).positioned(0,.82,0)); g.add(box(.42,.72,.04,mat.glass,true).positioned(-.05,.92,-.25)); return g; }
-function makeDumbbellRack(){ const g=new THREE.Group(); g.add(box(1.65,.12,.26,mat.metal,true).positioned(0,.48,0)); for(let i=0;i<6;i++){ const x=-.68+i*.27; g.add(cylinder(.08,.08,.08,mat.rubber).rotated(Math.PI/2,0,0).positioned(x,.62,-.08)); g.add(cylinder(.08,.08,.08,mat.rubber).rotated(Math.PI/2,0,0).positioned(x,.62,.08)); } return g; }
-function makeBenchPress(){ const g=new THREE.Group(); g.add(box(1.25,.18,.42,mat.red,true).positioned(0,.42,.35)); g.add(cylinder(.035,.035,1.55,mat.metal).rotated(0,0,Math.PI/2).positioned(0,.92,-.35)); [-.82,.82].forEach(x=>g.add(cylinder(.16,.16,.08,mat.rubber).rotated(0,0,Math.PI/2).positioned(x,.92,-.35))); return g; }
-function makeSquatRack(){ const g=new THREE.Group(); [-.55,.55].forEach(x=>{ g.add(cylinder(.04,.04,1.45,mat.metal).positioned(x,.85,-.45)); g.add(cylinder(.04,.04,1.45,mat.metal).positioned(x,.85,.45)); }); g.add(cylinder(.035,.035,1.35,mat.metal).rotated(0,0,Math.PI/2).positioned(0,1.35,-.45)); return g; }
-function makeCableMachine(){ const g=new THREE.Group(); [-.55,.55].forEach(x=>{ g.add(box(.28,1.55,.28,mat.dark,true).positioned(x,.9,0)); g.add(cylinder(.025,.025,1.05,mat.metal).positioned(x,.92,.35)); }); g.add(box(1.4,.12,.18,mat.metal,true).positioned(0,1.55,0)); return g; }
-function makeLegPress(){ const g=new THREE.Group(); g.add(box(1.0,.25,.65,mat.rubber,true).positioned(0,.42,.25)); g.add(box(.72,.12,.8,mat.metal,true).rotated(-.45,0,0).positioned(0,.72,-.25)); return g; }
-function makeWeightBench(){ const g=new THREE.Group(); g.add(box(.52,.2,1.2,mat.red,true).positioned(0,.4,0)); g.add(cylinder(.04,.04,.5,mat.metal).positioned(0,.2,-.35)); return g; }
-function makePlateTree(){ const g=new THREE.Group(); g.add(cylinder(.04,.04,.9,mat.metal).positioned(0,.55,0)); for(let i=0;i<4;i++) g.add(cylinder(.16+.03*i,.16+.03*i,.06,mat.rubber).rotated(0,0,Math.PI/2).positioned(i%2?-.22:.22,.4+i*.12,0)); return g; }
-function makeTreadmill(){ const g=new THREE.Group(); g.add(box(.72,.16,1.25,mat.rubber,true).positioned(0,.28,.05)); g.add(box(.58,.05,.82,mat.dark,true).positioned(0,.4,.12)); g.add(box(.72,.1,.06,mat.metal,true).positioned(0,.85,-.48)); return g; }
-function makeSpinBike(){ const g=new THREE.Group(); g.add(cylinder(.22,.22,.05,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.36,0)); g.add(cylinder(.04,.04,.6,mat.metal).positioned(0,.62,0)); g.add(box(.45,.08,.22,mat.rubber,true).positioned(0,.88,.22)); return g; }
-function makeRower(){ const g=new THREE.Group(); g.add(box(.36,.08,1.35,mat.metal,true).positioned(0,.32,0)); g.add(box(.42,.14,.28,mat.rubber,true).positioned(0,.45,.25)); g.add(cylinder(.18,.18,.08,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.35,-.58)); return g; }
-function makeCrossTrainer(){ const g=new THREE.Group(); g.add(box(.55,.1,1.0,mat.metal,true).positioned(0,.28,0)); [-.18,.18].forEach(x=>g.add(cylinder(.025,.025,1.0,mat.metal).positioned(x,.75,-.18))); g.add(box(.58,.08,.08,mat.rubber,true).positioned(0,.62,.35)); return g; }
-function makeStairClimber(){ const g=new THREE.Group(); for(let i=0;i<4;i++) g.add(box(.65,.08,.18,mat.rubber,true).positioned(0,.25+i*.13,.22-i*.16)); g.add(box(.65,1.0,.08,mat.metal,true).positioned(0,.72,-.42)); return g; }
-function makeYogaMat(){ const g=new THREE.Group(); g.add(box(.78,.035,.78,mat.purple,false).positioned(0,.18,0)); return g; }
-function makeReformer(){ const g=new THREE.Group(); g.add(box(.62,.16,1.35,mat.wood,true).positioned(0,.32,0)); g.add(box(.42,.12,.42,mat.rubber,true).positioned(0,.46,.28)); g.add(cylinder(.025,.025,.7,mat.metal).rotated(0,0,Math.PI/2).positioned(0,.62,-.48)); return g; }
-function makeMirror(){ const g=new THREE.Group(); g.add(box(.82,1.2,.06,mat.glass,true).positioned(0,.85,0)); return g; }
-function makeSpeaker(){ const g=new THREE.Group(); g.add(box(.42,.85,.38,mat.dark,true).positioned(0,.58,0)); g.add(cylinder(.13,.13,.04,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.72,-.21)); return g; }
-function makePoolLane(){ const g=new THREE.Group(); const baseW=6, baseH=2; g.add(box(baseW-.18,.22,baseH-.18,mat.stone,true).positioned(0,.26,0)); g.add(box(baseW-.46,.12,baseH-.46,mat.water,false).positioned(0,.42,0)); for(let z=-.45; z<=.45; z+=.9) g.add(box(baseW-.65,.035,.035,mat.kerb,false).positioned(0,.52,z)); return g; }
-function makeJacuzzi(){ const g=new THREE.Group(); g.add(cylinder(.9,.95,.36,mat.stone).positioned(0,.36,0)); g.add(cylinder(.72,.75,.12,mat.water).positioned(0,.62,0)); return g; }
-function makeSaunaCabin(){ const g=new THREE.Group(); g.add(box(1.65,1.3,1.55,mat.wood,true).positioned(0,.82,0)); g.add(box(.55,.9,.05,mat.glass,true).positioned(0,.74,-.79)); return g; }
-function makeSteamRoom(){ const g=new THREE.Group(); g.add(box(1.55,1.25,1.55,mat.glass,true).positioned(0,.78,0)); g.add(box(.45,.2,.45,mat.stone,true).positioned(-.45,.34,.35)); return g; }
-function makeShowerPod(){ const g=new THREE.Group(); g.add(cylinder(.22,.22,.08,mat.stone).positioned(0,.25,0)); g.add(cylinder(.025,.025,1.05,mat.metal).positioned(0,.78,.18)); g.add(cylinder(.12,.12,.05,mat.metal).positioned(0,1.25,.15)); return g; }
-function makeTreatmentBed(){ const g=new THREE.Group(); g.add(box(.68,.22,1.35,mat.wall,true).positioned(0,.38,0)); g.add(box(.36,.14,.28,mat.green,true).positioned(0,.58,-.42)); return g; }
-function makePlanter(){ const g=new THREE.Group(); g.add(cylinder(.22,.28,.35,mat.wood).positioned(0,.32,0)); for(let i=0;i<6;i++) g.add(box(.12,.38,.04,mat.green,true).rotated(.45,i,0).positioned(Math.cos(i)*.16,.65,Math.sin(i)*.16)); return g; }
-function makeWaterFeature(){ const g=new THREE.Group(); g.add(cylinder(.85,.9,.25,mat.stone).positioned(0,.28,0)); g.add(cylinder(.55,.55,.08,mat.water).positioned(0,.45,0)); g.add(cylinder(.08,.1,.65,mat.stone).positioned(0,.72,0)); return g; }
-function makeWallArt(){ const g=new THREE.Group(); g.add(box(.72,.72,.05,mat.gold,true).positioned(0,.74,0)); g.add(box(.56,.5,.06,mat.blue,true).positioned(0,.74,-.03)); return g; }
-function makeTowelStand(){ const g=new THREE.Group(); g.add(cylinder(.04,.04,.9,mat.metal).positioned(0,.55,0)); for(let i=0;i<3;i++) g.add(box(.55,.08,.22,[mat.teal,mat.blue,mat.pink][i],true).positioned(0,.35+i*.18,0)); return g; }
-function makePlantWall(){ const g=new THREE.Group(); g.add(box(1.55,1.2,.12,mat.green,true).positioned(0,.78,0)); for(let i=0;i<6;i++) g.add(box(.18,.2,.05,mat.grass,true).positioned(-.6+(i%3)*.6,.45+Math.floor(i/3)*.38,-.08)); return g; }
+function makeReceptionDesk(){ const g=new THREE.Group(); g.add(box(1.85,.72,.58,mat.wood,true).positioned(0,.36,0)); g.add(box(1.72,.08,.12,mat.gold,true).positioned(0,.76,-.23)); g.add(box(.42,.28,.06,mat.glass,true).positioned(.48,.94,-.24)); g.add(box(.3,.18,.25,mat.metal,true).positioned(-.58,.84,-.13)); g.add(cylinder(.06,.06,.32,mat.gold).positioned(-.82,.94,.14)); return g; }
+function makeTurnstile(){ const g=new THREE.Group(); [-.38,.38].forEach(x=>{ g.add(cylinder(.055,.055,.78,mat.metal).positioned(x,.39,0)); g.add(box(.56,.055,.055,mat.metal,true).positioned(x,.68,0)); g.add(box(.08,.5,.22,mat.glass,true).positioned(x,.42,.28)); }); g.add(box(1.35,.07,.12,mat.dark,true).positioned(0,.08,0)); return g; }
+function makeCafeCounter(){ const g=new THREE.Group(); g.add(box(2.7,.74,.58,mat.pink,true).positioned(0,.37,0)); g.add(box(2.55,.12,.18,mat.dark,true).positioned(0,.78,-.18)); g.add(box(.48,.62,.06,mat.glass,true).positioned(-.85,.84,-.31)); for(let i=0;i<5;i++) g.add(cylinder(.07,.06,.22,i%2?mat.green:mat.gold).positioned(-.55+i*.28,.92,.05)); g.add(box(.7,.2,.24,mat.metal,true).positioned(.88,.93,-.12)); return g; }
+function makeSofa(){ const g=new THREE.Group(); g.add(box(1.78,.34,.68,mat.purple,true).positioned(0,.17,0)); g.add(box(1.82,.68,.17,mat.purple,true).positioned(0,.42,-.29)); [-.68,0,.68].forEach(x=>g.add(box(.48,.08,.5,mat.pink,true).positioned(x,.38,.06))); g.add(box(.12,.36,.68,mat.purple,true).positioned(-.96,.28,0)); g.add(box(.12,.36,.68,mat.purple,true).positioned(.96,.28,0)); return g; }
+function makeLockerBank(){ const g=new THREE.Group(); [-.62,-.05,.52].forEach((x,i)=>{ g.add(box(.5,1.28,.36,i%2?mat.gold:mat.metal,true).positioned(x,.64,0)); g.add(box(.04,.08,.025,mat.dark,true).positioned(x+.14,.75,-.19)); g.add(box(.35,.025,.03,mat.dark,true).positioned(x,.38,-.19)); }); return g; }
+function makeBench(){ const g=new THREE.Group(); g.add(box(1.65,.18,.36,mat.wood,true).positioned(0,.33,0)); [-.55,.55].forEach(x=>{ g.add(cylinder(.035,.035,.42,mat.metal).positioned(x,.16,-.1)); g.add(cylinder(.035,.035,.42,mat.metal).positioned(x,.16,.1)); }); return g; }
+function makeVending(){ const g=new THREE.Group(); g.add(box(.76,1.45,.5,mat.blue,true).positioned(0,.72,0)); g.add(box(.42,.76,.04,mat.glass,true).positioned(-.07,.86,-.27)); g.add(box(.18,.22,.045,mat.dark,true).positioned(.24,.78,-.28)); for(let i=0;i<4;i++) g.add(box(.12,.08,.03,[mat.red,mat.gold,mat.green,mat.purple][i],true).positioned(-.18+(i%2)*.17,.62+Math.floor(i/2)*.17,-.3)); return g; }
+function makeDumbbellRack(){ const g=new THREE.Group(); g.add(box(1.72,.08,.22,mat.metal,true).positioned(0,.25,0)); g.add(box(1.72,.08,.22,mat.metal,true).positioned(0,.55,0)); [-.78,.78].forEach(x=>g.add(cylinder(.035,.035,.55,mat.metal).positioned(x,.35,0))); for(let i=0;i<8;i++){ const x=-.74+i*.21; g.add(cylinder(.07+.01*(i%4),.07+.01*(i%4),.07,mat.rubber).rotated(Math.PI/2,0,0).positioned(x,.64,-.08)); g.add(cylinder(.07+.01*(i%4),.07+.01*(i%4),.07,mat.rubber).rotated(Math.PI/2,0,0).positioned(x,.64,.08)); } return g; }
+function makeBenchPress(){ const g=new THREE.Group(); g.add(box(1.2,.16,.42,mat.red,true).positioned(0,.23,.32)); [-.45,.45].forEach(x=>g.add(cylinder(.04,.04,.78,mat.metal).positioned(x,.43,-.34))); g.add(cylinder(.035,.035,1.65,mat.metal).rotated(0,0,Math.PI/2).positioned(0,.83,-.34)); [-.9,.9].forEach(x=>{ g.add(cylinder(.17,.17,.075,mat.rubber).rotated(0,0,Math.PI/2).positioned(x,.83,-.34)); g.add(cylinder(.09,.09,.08,mat.rubber).rotated(0,0,Math.PI/2).positioned(x*.86,.83,-.34)); }); return g; }
+function makeSquatRack(){ const g=new THREE.Group(); [-.58,.58].forEach(x=>{ [-.47,.47].forEach(z=>g.add(cylinder(.04,.04,1.55,mat.metal).positioned(x,.78,z))); g.add(box(.12,.08,.18,mat.gold,true).positioned(x,.98,-.47)); }); g.add(cylinder(.035,.035,1.35,mat.metal).rotated(0,0,Math.PI/2).positioned(0,1.32,-.47)); g.add(box(1.35,.06,.08,mat.metal,true).positioned(0,1.48,.47)); return g; }
+function makeCableMachine(){ const g=new THREE.Group(); [-.62,.62].forEach(x=>{ g.add(box(.3,1.58,.32,mat.dark,true).positioned(x,.79,0)); g.add(cylinder(.022,.022,1.12,mat.metal).positioned(x,.73,.38)); g.add(box(.16,.16,.05,mat.gold,true).positioned(x,.95,.52)); }); g.add(box(1.5,.12,.2,mat.metal,true).positioned(0,1.53,0)); g.add(cylinder(.018,.018,1.3,mat.metal).rotated(0,0,Math.PI/2).positioned(0,1.34,.38)); return g; }
+function makeLegPress(){ const g=new THREE.Group(); g.add(box(1.0,.26,.66,mat.rubber,true).positioned(0,.22,.28)); g.add(box(.78,.13,.88,mat.metal,true).rotated(-.45,0,0).positioned(0,.54,-.24)); g.add(box(.65,.48,.08,mat.dark,true).rotated(-.45,0,0).positioned(0,.78,-.56)); g.add(box(.56,.12,.5,mat.red,true).positioned(0,.42,.45)); return g; }
+function makeWeightBench(){ const g=new THREE.Group(); g.add(box(.54,.18,1.2,mat.red,true).positioned(0,.25,0)); g.add(box(.5,.16,.42,mat.red,true).rotated(.35,0,0).positioned(0,.35,-.42)); [-.18,.18].forEach(x=>g.add(cylinder(.035,.035,.46,mat.metal).positioned(x,.12,.25))); return g; }
+function makePlateTree(){ const g=new THREE.Group(); g.add(cylinder(.045,.045,.92,mat.metal).positioned(0,.46,0)); for(let i=0;i<5;i++) g.add(cylinder(.15+.03*i,.15+.03*i,.055,mat.rubber).rotated(0,0,Math.PI/2).positioned(i%2?-.24:.24,.22+i*.12,0)); g.add(cylinder(.18,.22,.08,mat.metal).positioned(0,.04,0)); return g; }
+function makeTreadmill(){ const g=new THREE.Group(); g.add(box(.76,.15,1.3,mat.rubber,true).positioned(0,.12,.06)); g.add(box(.58,.045,.86,mat.dark,true).positioned(0,.22,.12)); [-.32,.32].forEach(x=>g.add(cylinder(.025,.025,.7,mat.metal).positioned(x,.5,-.46))); g.add(box(.78,.1,.08,mat.metal,true).positioned(0,.82,-.48)); g.add(box(.42,.24,.05,mat.glass,true).positioned(0,.94,-.53)); return g; }
+function makeSpinBike(){ const g=new THREE.Group(); g.add(cylinder(.22,.22,.05,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.24,0)); g.add(cylinder(.2,.2,.05,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.24,.45)); g.add(cylinder(.035,.035,.58,mat.metal).rotated(.25,0,0).positioned(0,.48,.18)); g.add(box(.45,.08,.22,mat.rubber,true).positioned(0,.68,.26)); g.add(box(.52,.05,.08,mat.metal,true).positioned(0,.84,-.28)); return g; }
+function makeRower(){ const g=new THREE.Group(); g.add(box(.36,.08,1.38,mat.metal,true).positioned(0,.13,0)); g.add(box(.42,.14,.28,mat.rubber,true).positioned(0,.27,.25)); g.add(cylinder(.18,.18,.08,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.18,-.58)); g.add(cylinder(.02,.02,.78,mat.metal).rotated(Math.PI/2,0,0).positioned(0,.43,-.18)); return g; }
+function makeCrossTrainer(){ const g=new THREE.Group(); g.add(box(.58,.09,1.05,mat.metal,true).positioned(0,.1,0)); [-.2,.2].forEach(x=>{ g.add(cylinder(.024,.024,1.0,mat.metal).positioned(x,.55,-.18)); g.add(box(.14,.05,.65,mat.rubber,true).positioned(x,.22,.2)); }); g.add(box(.6,.08,.08,mat.rubber,true).positioned(0,.62,.35)); g.add(box(.36,.18,.05,mat.glass,true).positioned(0,.78,-.42)); return g; }
+function makeStairClimber(){ const g=new THREE.Group(); for(let i=0;i<5;i++) g.add(box(.68,.075,.18,mat.rubber,true).positioned(0,.08+i*.11,.25-i*.14)); g.add(box(.68,.9,.08,mat.metal,true).positioned(0,.58,-.42)); g.add(box(.34,.16,.05,mat.glass,true).positioned(0,.88,-.48)); return g; }
+function makeYogaMat(){ const g=new THREE.Group(); g.add(box(.82,.035,.82,mat.purple,false).positioned(0,.018,0)); g.add(cylinder(.05,.05,.78,mat.teal).rotated(0,0,Math.PI/2).positioned(0,.07,-.32)); return g; }
+function makeReformer(){ const g=new THREE.Group(); g.add(box(.64,.16,1.36,mat.wood,true).positioned(0,.08,0)); g.add(box(.44,.12,.44,mat.rubber,true).positioned(0,.22,.28)); g.add(cylinder(.025,.025,.72,mat.metal).rotated(0,0,Math.PI/2).positioned(0,.39,-.5)); [-.26,.26].forEach(x=>g.add(cylinder(.018,.018,.85,mat.metal).positioned(x,.24,0))); return g; }
+function makeMirror(){ const g=new THREE.Group(); g.add(box(.86,1.45,.035,mat.glass,true).positioned(0,.72,0)); g.add(box(.94,.06,.045,mat.metal,true).positioned(0,1.46,0)); g.add(box(.94,.06,.045,mat.metal,true).positioned(0,-.02,0)); return g; }
+function makeSpeaker(){ const g=new THREE.Group(); g.add(box(.44,.88,.38,mat.dark,true).positioned(0,.44,0)); g.add(cylinder(.14,.14,.04,mat.rubber).rotated(Math.PI/2,0,0).positioned(0,.6,-.21)); g.add(cylinder(.08,.08,.04,mat.gold).rotated(Math.PI/2,0,0).positioned(0,.3,-.21)); return g; }
+function makePoolLane(){ const g=new THREE.Group(); const baseW=6, baseH=2; g.add(box(baseW-.05,.22,baseH-.05,mat.stone,true).positioned(0,.11,0)); g.add(box(baseW-.38,.12,baseH-.38,mat.water,false).positioned(0,.25,0)); for(let z=-.45; z<=.45; z+=.9) g.add(box(baseW-.65,.035,.035,mat.kerb,false).positioned(0,.34,z)); [-2.6,2.6].forEach(x=>g.add(cylinder(.035,.035,.55,mat.metal).rotated(0,0,Math.PI/2).positioned(x,.45,.78))); return g; }
+function makeJacuzzi(){ const g=new THREE.Group(); g.add(cylinder(.94,.98,.34,mat.stone).positioned(0,.17,0)); g.add(cylinder(.72,.75,.12,mat.water).positioned(0,.38,0)); for(let i=0;i<8;i++) g.add(cylinder(.035,.035,.02,mat.glass).positioned(Math.cos(i)*.5,.46,Math.sin(i)*.5)); return g; }
+function makeSaunaCabin(){ const g=new THREE.Group(); g.add(box(1.68,1.3,1.55,mat.wood,true).positioned(0,.65,0)); for(let x=-.5;x<=.5;x+=.5) g.add(box(.04,1.2,.04,mat.dark,true).positioned(x,.66,-.79)); g.add(box(.55,.9,.045,mat.glass,true).positioned(0,.58,-.79)); g.add(box(1.2,.18,.38,mat.wood,true).positioned(0,.25,.35)); return g; }
+function makeSteamRoom(){ const g=new THREE.Group(); g.add(box(1.58,1.28,1.58,mat.glass,true).positioned(0,.64,0)); g.add(box(.48,.22,.48,mat.stone,true).positioned(-.45,.11,.35)); for(let i=0;i<4;i++) g.add(cylinder(.04,.04,.35,mat.water).positioned(.3+i*.08,.55,.45)); return g; }
+function makeShowerPod(){ const g=new THREE.Group(); g.add(cylinder(.24,.24,.08,mat.stone).positioned(0,.04,0)); g.add(cylinder(.025,.025,1.08,mat.metal).positioned(0,.54,.18)); g.add(cylinder(.13,.13,.045,mat.metal).positioned(0,1.08,.15)); g.add(box(.42,1.0,.035,mat.glass,true).positioned(0,.5,-.22)); return g; }
+function makeTreatmentBed(){ const g=new THREE.Group(); g.add(box(.7,.22,1.38,mat.wall,true).positioned(0,.11,0)); g.add(box(.38,.14,.28,mat.green,true).positioned(0,.29,-.43)); g.add(cylinder(.05,.05,.75,mat.gold).positioned(-.45,.38,.45)); g.add(box(.22,.1,.22,mat.gold,true).positioned(-.45,.77,.45)); return g; }
+function makePlanter(){ const g=new THREE.Group(); g.add(cylinder(.24,.3,.35,mat.wood).positioned(0,.17,0)); for(let i=0;i<9;i++) g.add(box(.12,.42,.04,mat.green,true).rotated(.45,i*.7,0).positioned(Math.cos(i)*.18,.45+Math.random()*.08,Math.sin(i)*.18)); return g; }
+function makeWaterFeature(){ const g=new THREE.Group(); g.add(cylinder(.88,.92,.24,mat.stone).positioned(0,.12,0)); g.add(cylinder(.58,.58,.08,mat.water).positioned(0,.29,0)); g.add(cylinder(.08,.1,.65,mat.stone).positioned(0,.55,0)); g.add(cylinder(.32,.02,.42,mat.water).positioned(0,.9,0)); return g; }
+function makeWallArt(){ const g=new THREE.Group(); g.add(box(.76,.78,.045,mat.gold,true).positioned(0,.39,0)); g.add(box(.58,.52,.05,mat.blue,true).positioned(0,.39,-.03)); g.add(box(.22,.2,.055,mat.pink,true).positioned(-.12,.46,-.06)); return g; }
+function makeTowelStand(){ const g=new THREE.Group(); g.add(cylinder(.04,.04,.92,mat.metal).positioned(0,.46,0)); g.add(box(.64,.04,.08,mat.metal,true).positioned(0,.86,0)); for(let i=0;i<4;i++) g.add(box(.58,.075,.22,[mat.teal,mat.blue,mat.pink,mat.gold][i],true).positioned(0,.2+i*.16,0)); return g; }
+function makePlantWall(){ const g=new THREE.Group(); g.add(box(1.6,1.28,.1,mat.green,true).positioned(0,.64,0)); for(let i=0;i<12;i++) g.add(box(.16,.18,.05,i%2?mat.grass:mat.green,true).positioned(-.64+(i%4)*.42,.28+Math.floor(i/4)*.32,-.08)); g.add(box(1.7,.06,.12,mat.wood,true).positioned(0,1.32,0)); return g; }
+
+function addItemDetail(g,type){
+  const tag=box(.34,.055,.08,mat.gold,true).positioned(0,.04,.44); g.add(tag);
+  if(['classMirror','wallArt','plantWall'].includes(type)){ g.add(box(.08,.12,.08,mat.metal,true).positioned(-.42,.08,.02)); g.add(box(.08,.12,.08,mat.metal,true).positioned(.42,.08,.02)); }
+}
+function groundGroup(g){
+  g.updateMatrixWorld(true);
+  const box3=new THREE.Box3().setFromObject(g);
+  if(!Number.isFinite(box3.min.y)) return;
+  const dy=-box3.min.y;
+  g.children.forEach(ch=>ch.position.y+=dy);
+}
+
 function makeStaffFigure(id){ const g=new THREE.Group(); const color={receptionist:mat.teal, cleaner:mat.gold, instructor:mat.orange, lifeguard:mat.red, therapist:mat.purple}[id]||mat.blue; g.add(cylinder(.16,.18,.5,color).positioned(0,.45,0)); const head=new THREE.Mesh(new THREE.SphereGeometry(.15,18,18),mat.wall); head.position.y=.82; head.castShadow=true; g.add(head); const label=makeTextSprite(staffDefs[id].name.split(' ')[0]); label.position.set(0,1.18,0); label.scale.set(.8,.22,1); g.add(label); return g; }
 
 THREE.Object3D.prototype.positioned = function(x,y,z){ this.position.set(x,y,z); return this; };
@@ -520,17 +559,75 @@ function spawnVisitor(){
   const usable=state.items.filter(i=>itemDef(i.type).capacity>0); if(!usable.length) return; if(state.visitors.length>=Math.min(90, Math.max(8, Math.floor(state.members/2)))) return;
   const target=usable[Math.floor(Math.random()*usable.length)]; const start=entranceCell(); const goal=nearestTargetCell(target); const path=findPath(start,goal);
   if(!path){ state.routeScore=Math.max(0,state.routeScore-6); return; }
-  const mesh=makeVisitor(); const wp=tileToWorld(start.x,start.z); mesh.position.set(wp.x,.16,wp.z); groups.people.add(mesh); state.visitors.push({id:nextVisitorId++,mesh,targetId:target.id,path,pathIndex:0,speed:1.65+Math.random()*.7,spend:0,leaving:false});
+  const mesh=makeVisitor(); const wp=tileToWorld(start.x,start.z); mesh.position.set(wp.x,.155,wp.z); groups.people.add(mesh); state.visitors.push({id:nextVisitorId++,mesh,targetId:target.id,path,pathIndex:0,speed:1.65+Math.random()*.7,spend:0,leaving:false,using:false,useTime:2.6+Math.random()*2.0});
 }
-function makeVisitor(){ const g=new THREE.Group(); const body=cylinder(.15,.18,.48,[mat.teal,mat.blue,mat.gold,mat.pink,mat.purple][Math.floor(Math.random()*5)]); body.position.y=.42; g.add(body); const head=new THREE.Mesh(new THREE.SphereGeometry(.14,18,18),mat.wall); head.position.y=.75; head.castShadow=true; g.add(head); const sh=new THREE.Mesh(new THREE.CircleGeometry(.28,24),mat.shadow); sh.rotation.x=-Math.PI/2; sh.position.y=.02; g.add(sh); return g; }
+function makeVisitor(){
+  const g=new THREE.Group();
+  const shirt=[mat.teal,mat.blue,mat.gold,mat.pink,mat.purple][Math.floor(Math.random()*5)];
+  const body=cylinder(.15,.18,.48,shirt).positioned(0,.42,0); g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.14,18,18),mat.wall); head.position.y=.75; head.castShadow=true; g.add(head);
+  const armL=cylinder(.035,.04,.45,mat.wall).positioned(-.19,.46,0); const armR=cylinder(.035,.04,.45,mat.wall).positioned(.19,.46,0); g.add(armL,armR);
+  const legL=cylinder(.045,.045,.42,mat.dark).positioned(-.07,.17,0); const legR=cylinder(.045,.045,.42,mat.dark).positioned(.07,.17,0); g.add(legL,legR);
+  const sh=new THREE.Mesh(new THREE.CircleGeometry(.28,24),mat.shadow); sh.rotation.x=-Math.PI/2; sh.position.y=.015; g.add(sh);
+  g.userData.parts={body,head,armL,armR,legL,legR};
+  return g;
+}
 function updateVisitors(dt){
   for(const v of [...state.visitors]){
-    const targetCell=v.path[v.pathIndex]; if(!targetCell){ removeVisitor(v); continue; }
+    if(v.using){ updateVisitorUse(v,dt); continue; }
+    const targetCell=v.path[v.pathIndex];
+    if(!targetCell){ if(v.leaving) removeVisitor(v); else v.using=true; continue; }
     const dest=tileToWorld(targetCell.x,targetCell.z); const dir=new THREE.Vector3(dest.x-v.mesh.position.x,0,dest.z-v.mesh.position.z); const dist=dir.length();
-    if(dist>.08){ dir.normalize(); v.mesh.position.addScaledVector(dir,v.speed*dt); v.mesh.rotation.y=Math.atan2(dir.x,dir.z); v.mesh.position.y=.16+Math.sin(performance.now()*.008+v.id)*.025; }
-    else { v.pathIndex++; if(v.pathIndex>=v.path.length){ if(v.leaving){ removeVisitor(v); continue; } v.spend+=dt; if(v.spend>2.2+Math.random()*1.6){ const target=state.items.find(i=>i.id===v.targetId); if(target){ const def=itemDef(target.type); let mult=.8+state.rating/100; if(['freeweights','cardio','studio'].includes(def.cat)) mult+=state.staff.instructor*.05; if(def.cat==='poolspa') mult+=state.staff.lifeguard*.04+state.staff.therapist*.05; state.cash+=Math.round(def.income*mult); target.visits++; target.condition=clamp(target.condition-(.35+Math.random()*.35)/(1+state.staff.cleaner*.25),35,100); }
-        if(Math.random()<.42){ v.leaving=true; const start=entranceCell(); const cur=worldToTile(v.mesh.position); v.path=findPath(cur,start)||[cur,start]; v.pathIndex=0; } else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; const cur=worldToTile(v.mesh.position); v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
-      }}}
+    if(dist>.08){
+      resetVisitorPose(v);
+      dir.normalize(); v.mesh.position.addScaledVector(dir,v.speed*dt); v.mesh.rotation.y=Math.atan2(dir.x,dir.z); v.mesh.position.y=.155+Math.sin(performance.now()*.008+v.id)*.025;
+    } else {
+      v.pathIndex++;
+      if(v.pathIndex>=v.path.length){
+        if(v.leaving){ removeVisitor(v); continue; }
+        v.using=true; v.spend=0; v.useTime=2.6+Math.random()*2.0;
+      }
+    }
+  }
+}
+function updateVisitorUse(v,dt){
+  const target=state.items.find(i=>i.id===v.targetId);
+  if(!target){ removeVisitor(v); return; }
+  const def=itemDef(target.type);
+  poseVisitorUsing(v,target,def);
+  v.spend+=dt;
+  if(v.spend<v.useTime) return;
+  let mult=.8+state.rating/100; if(['freeweights','cardio','studio'].includes(def.cat)) mult+=state.staff.instructor*.05; if(def.cat==='poolspa') mult+=state.staff.lifeguard*.04+state.staff.therapist*.05;
+  state.cash+=Math.round(def.income*mult); target.visits++; target.condition=clamp(target.condition-(.35+Math.random()*.35)/(1+state.staff.cleaner*.25),35,100);
+  v.using=false; resetVisitorPose(v);
+  if(Math.random()<.42){ v.leaving=true; const start=entranceCell(); const cur=worldToTile(v.mesh.position); v.path=findPath(cur,start)||[cur,start]; v.pathIndex=0; }
+  else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; const cur=worldToTile(v.mesh.position); v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
+}
+function resetVisitorPose(v){
+  const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id;
+  v.mesh.scale.set(1,1,1); v.mesh.position.y=.155;
+  p.body.rotation.set(0,0,0); p.head.rotation.set(0,0,0);
+  p.armL.rotation.set(Math.sin(t)*.45,0,.18); p.armR.rotation.set(-Math.sin(t)*.45,0,-.18);
+  p.legL.rotation.set(-Math.sin(t)*.35,0,0); p.legR.rotation.set(Math.sin(t)*.35,0,0);
+}
+function poseVisitorUsing(v,item,def){
+  const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id;
+  const itemCenter=tileToWorld(item.x,item.z,item.w,item.h); v.mesh.lookAt(itemCenter.x,v.mesh.position.y,itemCenter.z);
+  v.mesh.position.y=.155;
+  p.body.rotation.set(0,0,0); p.head.rotation.set(0,0,0);
+  p.armL.rotation.set(0,0,.7); p.armR.rotation.set(0,0,-.7); p.legL.rotation.set(0,0,0); p.legR.rotation.set(0,0,0);
+  if(def.cat==='cardio'){
+    p.armL.rotation.x=Math.sin(t*2)*.65; p.armR.rotation.x=-Math.sin(t*2)*.65; p.legL.rotation.x=-Math.sin(t*2)*.75; p.legR.rotation.x=Math.sin(t*2)*.75; v.mesh.position.y=.155+Math.abs(Math.sin(t*2))*.025;
+  } else if(def.cat==='freeweights'){
+    p.armL.rotation.set(-1.15+Math.sin(t*1.8)*.25,0,.35); p.armR.rotation.set(-1.15+Math.sin(t*1.8)*.25,0,-.35); p.body.rotation.x=.1;
+  } else if(def.cat==='studio'){
+    v.mesh.scale.set(1.05,.72,1.05); p.armL.rotation.set(0,0,1.25); p.armR.rotation.set(0,0,-1.25); p.legL.rotation.set(.55,0,.25); p.legR.rotation.set(.55,0,-.25);
+  } else if(def.cat==='poolspa' && item.type==='poolLane'){
+    v.mesh.position.y=.24+Math.sin(t*2)*.015; v.mesh.scale.set(1.15,.55,1.15); p.armL.rotation.x=Math.sin(t*3)*1.1; p.armR.rotation.x=-Math.sin(t*3)*1.1;
+  } else if(def.cat==='poolspa'){
+    v.mesh.scale.set(1,.85,1); p.armL.rotation.set(0,0,.95); p.armR.rotation.set(0,0,-.95);
+  } else if(def.cat==='clubhouse'){
+    v.mesh.scale.set(1,.9,1); p.armL.rotation.set(-.55,0,.55); p.armR.rotation.set(-.45,0,-.55);
   }
 }
 function removeVisitor(v){ groups.people.remove(v.mesh); state.visitors=state.visitors.filter(x=>x!==v); }
