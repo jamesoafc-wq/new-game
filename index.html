@@ -1,105 +1,93 @@
-# Leisure Club Tycoon 3D - Expanded Design
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leisure Club Tycoon 3D</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+      <div id="vignette"></div>
 
-## Fantasy
+      <aside id="hud" class="panel glass">
+        <div class="brand">
+          <div class="brand-icon">LC</div>
+          <div>
+            <h1>Leisure Club Tycoon</h1>
+            <p>Build a premium gym, spa & wellness club.</p>
+          </div>
+        </div>
 
-Build a tired empty leisure unit into a premium health, gym, spa and wellness club. The vibe is not a pure gym; it should feel like David Lloyd / Nuffield / private members club / resort spa mixed with a tycoon builder.
+        <section class="stats-grid">
+          <div><span>Cash</span><strong id="cash">£0</strong></div>
+          <div><span>Members</span><strong id="members">0</strong></div>
+          <div><span>Rating</span><strong id="rating">0%</strong></div>
+          <div><span>Rep</span><strong id="rep">0</strong></div>
+          <div><span>Day</span><strong id="day">1</strong></div>
+          <div><span>Time</span><strong id="clock">06:00</strong></div>
+        </section>
 
-## Core loop
+        <div class="divider"></div>
 
-1. Build facilities.
-2. Members visit and spend money.
-3. Club rating rises or falls based on variety, cleanliness, crowding, condition and luxury feel.
-4. Better rating increases membership and reputation.
-5. Reputation unlocks premium facilities.
-6. Use cash to expand the plot and upgrade the club.
+        <section>
+          <div class="section-title">
+            <h2>Build</h2>
+            <span id="selectedHint">Select a facility</span>
+          </div>
+          <div id="buildMenu" class="build-menu"></div>
+        </section>
 
-## Facility categories
+        <section class="actions">
+          <button id="rotateBtn" class="secondary">Rotate</button>
+          <button id="deleteBtn" class="secondary">Bulldoze</button>
+          <button id="expandBtn">Expand Plot</button>
+        </section>
 
-### Fitness
-- Cardio Suite
-- Free Weights
-- Functional Training Rig
-- Spin Studio
-- PT Pods
-- Recovery Zone
+        <section class="actions compact">
+          <button id="saveBtn" class="secondary">Save</button>
+          <button id="loadBtn" class="secondary">Load</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </section>
+      </aside>
 
-### Leisure
-- Pool Lanes
-- Family Pool
-- Hydro Pool
-- Sauna
-- Steam Room
-- Ice Bath
-- Jacuzzi
+      <aside id="inspector" class="panel glass">
+        <h2 id="inspectTitle">Welcome</h2>
+        <p id="inspectBody">
+          Start by placing reception, then add cardio, weights, pool, sauna,
+          studio and a juice bar. Members will visit, spend money and rate the club.
+        </p>
 
-### Wellness
-- Yoga Studio
-- Pilates Reformer Studio
-- Spa Treatment Room
-- Meditation Room
-- Physiotherapy Room
-- Beauty Room
+        <div class="progress">
+          <div class="progress-label">
+            <span>Cleanliness</span>
+            <strong id="cleanText">100%</strong>
+          </div>
+          <div class="bar"><i id="cleanBar"></i></div>
+        </div>
 
-### Clubhouse
-- Reception
-- Juice Bar
-- Cafe Lounge
-- Members Terrace
-- Changing Rooms
-- Lockers
-- Retail Wall
-- Childcare Creche
+        <div class="progress">
+          <div class="progress-label">
+            <span>Luxury Feel</span>
+            <strong id="luxuryText">0%</strong>
+          </div>
+          <div class="bar"><i id="luxuryBar"></i></div>
+        </div>
 
-## Member archetypes
+        <div class="objective-card">
+          <h3>Objectives</h3>
+          <ul id="objectives"></ul>
+        </div>
+      </aside>
 
-- New Starter: cheap, easy to satisfy, mainly cardio/classes.
-- Gym Regular: uses weights/cardio, dislikes crowding.
-- Swimmer: wants pool/changing rooms, pays steady fees.
-- Spa Guest: high spend, expects sauna/spa/cleanliness.
-- Class Fan: wants yoga/spin/pilates timetable.
-- Family Member: values pool, cafe, creche and cleanliness.
-- Corporate Member: pays well, expects premium lounge and fast check-in.
+      <div id="toast" class="toast hidden"></div>
 
-## Deeper systems to add
+      <div id="mobileControls" class="mobile-controls">
+        <button id="mobileRotate">↻</button>
+        <button id="mobileCancel">×</button>
+      </div>
+    </div>
 
-### Room zoning
-Players should eventually draw rooms using walls, floors, doors and windows. Facilities should work best inside correct zones.
-
-### Staff
-- Receptionist: faster check-in, higher first impression.
-- Cleaner: slows cleanliness decay.
-- Instructor: improves studio/cardio/weights value.
-- Lifeguard: required for bigger pools.
-- Therapist: required for spa income.
-- Manager: improves efficiency and reduces complaints.
-
-### Progression
-- Level 1: Independent local gym.
-- Level 2: Health club.
-- Level 3: Leisure club with pool.
-- Level 4: Premium spa club.
-- Level 5: Resort-style wellness campus.
-
-### Events
-- January fitness rush.
-- Summer pool surge.
-- Equipment breakdown.
-- Bad review going viral.
-- Local competitor opens.
-- Corporate membership offer.
-- Health inspection.
-- Celebrity/influencer visit.
-
-## Visual direction
-
-- Clean glass walls.
-- Warm wood.
-- Soft teal lighting.
-- Premium stone floors.
-- Plants and water features.
-- Spa/pool areas glowing slightly at night.
-- Members visible as simple stylised characters at first.
-
-## Long-term dream version
-
-A full 3D leisure club builder where you can design multi-floor buildings, roof terraces, pools, saunas, treatment rooms, cafes, indoor courts and outdoor wellness gardens. Members behave differently, reviews appear dynamically and your club brand grows from a small local gym to a national luxury chain.
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
