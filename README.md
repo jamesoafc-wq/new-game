@@ -1,16 +1,11 @@
-{
-  "name": "leisure-club-tycoon-3d",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vite": "latest",
-    "three": "0.184.0"
-  },
-  "devDependencies": {}
-}
+# Leisure Club Tycoon 3D
+
+A lightweight browser-based 3D leisure club tycoon prototype.
+
+Build a premium gym, spa and wellness club. Place facilities, attract members, earn money, grow reputation, unlock premium leisure features and expand the plot.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
