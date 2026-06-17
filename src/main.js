@@ -30,7 +30,7 @@ controls.update();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(99, 99);
 const clock = new THREE.Clock();
-const SAVE_KEY = 'leisure-club-tycoon-builder-v6';
+const SAVE_KEY = 'leisure-club-tycoon-builder-v7';
 
 const ui = {
   cash: $('#cash'), members: $('#members'), rating: $('#rating'), rep: $('#rep'), day: $('#day'), clock: $('#clock'),
@@ -115,10 +115,10 @@ const wallTypes = [
 ];
 
 const openingTypes = [
-  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', thickness:.12, height:2.45, desc:'A passable interior door that fits the frame properly.' },
-  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:220, kind:'door', blocks:false, material:'doorGlass', thickness:.075, height:2.55, desc:'Premium double door, passable.' },
-  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', thickness:.07, height:2.5, desc:'Passable glass sliding door.' },
-  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:190, kind:'door', blocks:false, material:'wood', thickness:.16, height:2.55, desc:'Open arched pass-through with no broken circular cap.' },
+  { id:'singleDoor', name:'Single Door', emoji:'🚪', cost:140, kind:'door', blocks:false, material:'wood', thickness:.12, height:2.78, desc:'A full-height passable interior door that fits the frame properly.' },
+  { id:'doubleDoor', name:'Double Glass Door', emoji:'🚪', cost:360, kind:'door', blocks:false, material:'doorGlass', thickness:.075, height:2.82, span:2, desc:'Premium double door spanning two grid edges, passable and animated.' },
+  { id:'slidingDoor', name:'Sliding Spa Door', emoji:'↔️', cost:260, kind:'door', blocks:false, material:'doorGlass', thickness:.07, height:2.78, desc:'Passable glass sliding door that animates as members pass.' },
+  { id:'archedDoor', name:'Arched Doorway', emoji:'⌒', cost:210, kind:'door', blocks:false, material:'wood', thickness:.16, height:2.86, desc:'Open arched pass-through with a true curved arch frame.' },
   { id:'windowPanel', name:'Standard Window', emoji:'🪟', cost:160, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.55, glassH:1.78, top:.22, desc:'Tall standard window panel with edge-to-edge glass.' },
   { id:'wideWindow', name:'Wide Picture Window', emoji:'▭', cost:220, kind:'window', blocks:true, material:'glass', thickness:.07, sill:.42, glassH:1.91, top:.22, wide:true, desc:'Wide premium window with glass to the outside frame.' },
   { id:'fullHeightWindow', name:'Full-Height Glass Window', emoji:'▯', cost:280, kind:'window', blocks:true, material:'glass', thickness:.06, sill:.1, glassH:2.27, top:.18, full:true, desc:'Floor-to-ceiling glass with only an outside border, so rows flow cleanly.' },
@@ -252,6 +252,9 @@ function edgeKey(x,z,dir){ return `${dir}:${x}:${z}`; }
 function hasItem(type){ return state.items.some(i=>i.type===type); }
 function itemDef(id){ return itemDefs[id]; }
 function edgeDef(id){ return [...wallTypes, ...openingTypes].find(x=>x.id===id); }
+function edgeSpan(defOrId){ const def=typeof defOrId==='string'?edgeDef(defOrId):defOrId; return Math.max(1, def?.span || 1); }
+function edgeSegments(e){ const span=edgeSpan(e.type); return Array.from({length:span},(_,i)=>({dir:e.dir,x:e.dir==='h'?e.x+i:e.x,z:e.dir==='v'?e.z+i:e.z})); }
+function edgeAtSegment(x,z,dir){ return state.edges.find(e=>edgeSegments(e).some(seg=>seg.x===x&&seg.z===z&&seg.dir===dir)); }
 function floorDef(id){ return floorTypes.find(x=>x.id===id); }
 function selectedDef(){ if(state.mode==='floor') return floorDef(state.selectedId); if(state.mode==='edge') return edgeDef(state.selectedId); if(state.mode==='item') return itemDef(state.selectedId); return null; }
 function rotatedSize(def, rot=state.rotation){ const [w,h]=def.size || [1,1]; return rot % 2 === 0 ? [w,h] : [h,w]; }
@@ -327,7 +330,7 @@ function makeBuildMenu(){
   getCategoryItems(state.category).forEach(def=>{
     const id=def.id;
     const btn=document.createElement('button'); btn.className='build-card'; btn.dataset.id=id;
-    btn.innerHTML=`<span class="emoji">${def.emoji}</span><strong>${def.name}</strong><small><span class="cost">${money(def.cost)}</span>${def.size?` · ${def.size[0]}x${def.size[1]}`:''}<br>${def.desc||''}</small>`;
+    btn.innerHTML=`<span class="emoji">${def.emoji}</span><strong>${def.name}</strong><small><span class="cost">${money(def.cost)}</span>${def.size?` · ${def.size[0]}x${def.size[1]}`:def.span?` · ${def.span} edges`:''}<br>${def.desc||''}</small>`;
     btn.addEventListener('click',()=>{
       if(state.selectedId===id && !state.bulldoze){ deselect(); return; }
       state.selectedId=id; state.mode=getModeForCat(state.category); state.bulldoze=false; selectedThing=null; refreshPreview(); updateUi(true);
@@ -407,12 +410,12 @@ function refreshPreview(){
   if(ghost) groups.previews.add(ghost);
 }
 function makeEdgePreview(x,z,dir,ok){
-  const g=new THREE.Group(); const def=edgeDef(state.selectedId)||{}; const thick=def.thickness||.16;
+  const g=new THREE.Group(); const def=edgeDef(state.selectedId)||{}; const thick=def.thickness||.16; const span=edgeSpan(def);
   const h=def.kind==='window'?2.55:(def.height||.9);
-  const mesh=box(dir==='h'?1:thick,h,dir==='h'?thick:1,ok?mat.ghostEdge:mat.ghostBad,false);
-  const pos=edgeWorld(x,z,dir); mesh.position.set(pos.x,h/2,pos.z); g.add(mesh); return g;
+  const mesh=box(dir==='h'?span:thick,h,dir==='h'?thick:span,ok?mat.ghostEdge:mat.ghostBad,false);
+  const pos=edgeWorld(x,z,dir,span); mesh.position.set(pos.x,h/2,pos.z); g.add(mesh); return g;
 }
-function edgeWorld(x,z,dir){ return dir==='h' ? new THREE.Vector3(plotOriginX()+x+.5,0,plotOriginZ()+z) : new THREE.Vector3(plotOriginX()+x,0,plotOriginZ()+z+.5); }
+function edgeWorld(x,z,dir,span=1){ return dir==='h' ? new THREE.Vector3(plotOriginX()+x+span/2,0,plotOriginZ()+z) : new THREE.Vector3(plotOriginX()+x,0,plotOriginZ()+z+span/2); }
 
 function handleClick(){
   if(state.bulldoze){ bulldozeAtHover(); return; }
@@ -423,9 +426,13 @@ function handleClick(){
 }
 function canPlaceFloor(x,z){ return isUnlockedCell(x,z); }
 function canPlaceEdge(x,z,dir){
-  const a = dir==='h' ? [x,z-1] : [x-1,z]; const b = dir==='h' ? [x,z] : [x,z];
-  if(!(isUnlockedCell(a[0],a[1]) || isUnlockedCell(b[0],b[1]))) return {ok:false,reason:'Edge is outside unlocked plot'};
-  if(state.edges.some(e=>e.x===x && e.z===z && e.dir===dir)) return {ok:false,reason:'Edge already has a wall/opening'};
+  const def=edgeDef(state.selectedId); const span=edgeSpan(def);
+  for(let i=0;i<span;i++){
+    const sx=dir==='h'?x+i:x; const sz=dir==='v'?z+i:z;
+    const a = dir==='h' ? [sx,sz-1] : [sx-1,sz]; const b = dir==='h' ? [sx,sz] : [sx,sz];
+    if(!(isUnlockedCell(a[0],a[1]) || isUnlockedCell(b[0],b[1]))) return {ok:false,reason:'Edge is outside unlocked plot'};
+    if(edgeAtSegment(sx,sz,dir)) return {ok:false,reason:'Edge already has a wall/opening'};
+  }
   return {ok:true};
 }
 function canPlaceItem(type,x,z,rot){
@@ -439,9 +446,9 @@ function canPlaceItem(type,x,z,rot){
 }
 function rectOverlap(ax,az,aw,ah,bx,bz,bw,bh){ return ax<bx+bw && ax+aw>bx && az<bz+bh && az+ah>bz; }
 function placeFloor(x,z){ if(!canPlaceFloor(x,z)){ toast('Floor is outside unlocked plot.'); return; } const def=floorDef(state.selectedId); if(state.cash<def.cost){ toast(`${def.name} costs ${money(def.cost)}.`); return; } const existing=state.floors.find(f=>f.x===x&&f.z===z); if(existing){ if(existing.type===def.id){ inspectThing('floor', existing.id); return; } existing.type=def.id; state.cash-=Math.round(def.cost*.45); } else { state.cash-=def.cost; state.floors.push({id:nextId++,type:def.id,x,z}); } rebuildFloors(); updateUi(true); }
-function placeEdge(type,x,z,dir){ const check=canPlaceEdge(x,z,dir); if(!check.ok){ toast(check.reason); return; } const def=edgeDef(type); if(state.cash<def.cost){ toast(`${def.name} costs ${money(def.cost)}.`); return; } state.cash-=def.cost; state.edges.push({id:nextId++,type,x,z,dir}); rebuildEdges(); pathCacheVersion++; updateUi(true); }
+function placeEdge(type,x,z,dir){ const check=canPlaceEdge(x,z,dir); if(!check.ok){ toast(check.reason); return; } const def=edgeDef(type); if(state.cash<def.cost){ toast(`${def.name} costs ${money(def.cost)}.`); return; } state.cash-=def.cost; state.edges.push({id:nextId++,type,x,z,dir,span:edgeSpan(def)}); rebuildEdges(); pathCacheVersion++; updateUi(true); }
 function placeItem(type,x,z,rot){ const check=canPlaceItem(type,x,z,rot); if(!check.ok){ toast(check.reason); return; } const def=itemDef(type); if(!def){ toast('Select an equipment item first'); return; } const [w,h]=rotatedSize(def,rot); state.cash-=def.cost; const item={id:nextId++,type,x,z,w,h,rot,condition:100,visits:0}; state.items.push(item); rebuildItems(); pathCacheVersion++; inspectThing('item', item.id); updateUi(true); }
-function bulldozeAtHover(){ if(!hovered) return; if(hovered.hitKind){ removeThing(hovered.hitKind, hovered.hitId); return; } if(state.mode==='edge' && hovered.dir){ const e=state.edges.find(e=>e.x===hovered.x&&e.z===hovered.z&&e.dir===hovered.dir); if(e) removeThing('edge',e.id); return; } if(hovered.x!==undefined){ const f=state.floors.find(f=>f.x===hovered.x&&f.z===hovered.z); if(f) removeThing('floor',f.id); }}
+function bulldozeAtHover(){ if(!hovered) return; if(hovered.hitKind){ removeThing(hovered.hitKind, hovered.hitId); return; } if(state.mode==='edge' && hovered.dir){ const e=edgeAtSegment(hovered.x,hovered.z,hovered.dir); if(e) removeThing('edge',e.id); return; } if(hovered.x!==undefined){ const f=state.floors.find(f=>f.x===hovered.x&&f.z===hovered.z); if(f) removeThing('floor',f.id); }}
 function removeThing(kind,id){
   if(kind==='item'){ const it=state.items.find(i=>i.id===id); if(!it) return; state.cash+=Math.round(itemDef(it.type).cost*.35); state.items=state.items.filter(i=>i.id!==id); rebuildItems(); pathCacheVersion++; toast('Object removed.'); }
   if(kind==='edge'){ const e=state.edges.find(e=>e.id===id); if(!e) return; state.cash+=Math.round(edgeDef(e.type).cost*.35); state.edges=state.edges.filter(x=>x.id!==id); rebuildEdges(); pathCacheVersion++; toast('Wall/opening removed.'); }
@@ -460,43 +467,66 @@ function rebuildFloors(){ groups.floors.clear(); state.floors.forEach(f=>{ const
 function addFloorPattern(tile,def,f){ if(['rubberGreen','poolTile','courtWood','kidsFoam','cafeTerrazzo'].includes(def.id)){ const line=box(.92,.01,.035,mat.dark,false); line.position.set(tile.position.x,.151,tile.position.z); line.userData={kind:'floor',id:f.id}; groups.floors.add(line); } }
 function rebuildEdges(){ groups.edges.clear(); state.edges.forEach(e=>{ const model=makeEdgeModel(e); groups.edges.add(model); }); }
 function makeEdgeModel(e){
-  const def=edgeDef(e.type); const g=new THREE.Group(); const pos=edgeWorld(e.x,e.z,e.dir);
-  const h=def.height||2.55; const thick=def.thickness||.16; const material=mat[def.material]||mat.wall;
+  const def=edgeDef(e.type); const g=new THREE.Group(); const span=edgeSpan(def); const pos=edgeWorld(e.x,e.z,e.dir,span);
+  const h=def.height||2.65; const thick=def.thickness||.16; const material=mat[def.material]||mat.wall;
   const along = e.dir==='h' ? 'x' : 'z';
   const across = e.dir==='h' ? 'z' : 'x';
+  const half=span/2;
   const mk=(len,hh,dep,material,y,off=0)=>{
     const m=box(e.dir==='h'?len:dep, hh, e.dir==='h'?dep:len, material, true);
     m.position.set(pos.x, y, pos.z); m.position[along]+=off; return m;
   };
+  const addHandle=(off,side=1)=>{ const handle=cylinder(.028,.028,.09,mat.gold); handle.rotation.x=Math.PI/2; handle.position.set(pos.x,1.18,pos.z); handle.position[along]+=off; handle.position[across]+=side*.062; g.add(handle); return handle; };
 
   if(def.kind==='door'){
     const frameMat=(e.type==='doubleDoor'||e.type==='slidingDoor')?mat.metal:mat.exterior;
     const postDepth=Math.max(thick,.12);
-    g.add(mk(.08,h,postDepth,frameMat,h/2,-.47));
-    g.add(mk(.08,h,postDepth,frameMat,h/2,.47));
-    g.add(mk(1.0,.16,postDepth,frameMat,h-.08,0));
+    const postH=h;
+    g.add(mk(.09,postH,postDepth,frameMat,postH/2,-half+.045));
+    g.add(mk(.09,postH,postDepth,frameMat,postH/2,half-.045));
+    if(e.type!=='archedDoor') g.add(mk(span,.16,postDepth,frameMat,h-.08,0));
+    g.add(mk(span,.07,postDepth,frameMat,.035,0));
 
     if(e.type==='archedDoor'){
-      // Built from small arch blocks rather than a disk/circle, so it faces the doorway correctly.
-      const archPieces=[[-.34,2.05,.18],[-.18,2.27,.18],[0,2.36,.22],[.18,2.27,.18],[.34,2.05,.18]];
-      archPieces.forEach(([off,y,hh])=>g.add(mk(.16,hh,postDepth,frameMat,y,off)));
+      const springY=1.92; const radius=Math.max(.42, span*.38); const tube=.055;
+      const archGeo=new THREE.TorusGeometry(radius, tube, 10, 36, Math.PI);
+      const arch=new THREE.Mesh(archGeo, frameMat);
+      arch.position.set(pos.x,springY,pos.z);
+      if(e.dir==='v') arch.rotation.y=Math.PI/2;
+      arch.userData.staticFrame=true;
+      arch.castShadow=true; arch.receiveShadow=true; g.add(arch);
+      g.add(mk(.11,springY,postDepth,frameMat,springY/2,-radius));
+      g.add(mk(.11,springY,postDepth,frameMat,springY/2,radius));
+      const sill=mk(span*.86,.055,postDepth,mat.stone,.055,0); g.add(sill);
     } else if(e.type==='singleDoor'){
-      const leaf=mk(.62,1.92,.045,material,.96,0);
-      leaf.position[across]+=.025; g.add(leaf);
-      g.add(mk(.04,1.92,.055,mat.metal,.96,-.33));
-      g.add(mk(.04,1.92,.055,mat.metal,.96,.33));
-      const handle=cylinder(.03,.03,.075,mat.gold); handle.rotation.x=Math.PI/2; handle.position.set(pos.x,.98,pos.z); handle.position[along]+=.2; handle.position[across]+=.055; g.add(handle);
+      const panelH=h-.42;
+      const leaf=mk(.7,panelH,.052,material,panelH/2+.08,-.01);
+      leaf.position[across]+=.028; leaf.userData.doorLeaf={edgeId:e.id,baseRot:0,openDir:e.dir==='h'?1:-1}; g.add(leaf);
+      g.add(mk(.035,panelH,.06,mat.metal,panelH/2+.08,-.37));
+      g.add(mk(.035,panelH,.06,mat.metal,panelH/2+.08,.37));
+      addHandle(.22,1);
     } else if(e.type==='doubleDoor'){
-      const left=mk(.42,2.05,.04,mat.doorGlass,1.03,-.22); const right=mk(.42,2.05,.04,mat.doorGlass,1.03,.22);
-      left.position[across]+=.025; right.position[across]+=.025; g.add(left,right);
-      g.add(mk(.035,2.08,.055,mat.metal,1.04,0));
-      [-.12,.12].forEach(off=>{ const hdl=cylinder(.025,.025,.08,mat.gold); hdl.rotation.x=Math.PI/2; hdl.position.set(pos.x,1.02,pos.z); hdl.position[along]+=off; hdl.position[across]+=.06; g.add(hdl); });
+      const panelH=h-.38;
+      const left=mk(.82,panelH,.045,mat.doorGlass,panelH/2+.07,-.43); const right=mk(.82,panelH,.045,mat.doorGlass,panelH/2+.07,.43);
+      left.position[across]+=.03; right.position[across]+=.03;
+      left.userData.doorLeaf={edgeId:e.id,baseRot:0,openDir:e.dir==='h'?1:-1};
+      right.userData.doorLeaf={edgeId:e.id,baseRot:0,openDir:e.dir==='h'?-1:1};
+      g.add(left,right);
+      g.add(mk(.045,panelH+.02,.06,mat.metal,panelH/2+.08,0));
+      g.add(mk(.045,panelH+.02,.06,mat.metal,panelH/2+.08,-.86));
+      g.add(mk(.045,panelH+.02,.06,mat.metal,panelH/2+.08,.86));
+      addHandle(-.13,1); addHandle(.13,1);
     } else if(e.type==='slidingDoor'){
-      g.add(mk(.88,.07,.08,mat.metal,2.22,0));
-      const rear=mk(.48,1.95,.035,mat.doorGlass,.98,-.18); rear.position[across]-=.02;
-      const front=mk(.48,1.95,.035,mat.doorGlass,.98,.18); front.position[across]+=.04;
+      const panelH=h-.42;
+      g.add(mk(.9,.075,.08,mat.metal,h-.28,-.24));
+      g.add(mk(.9,.075,.08,mat.metal,h-.20,.24));
+      const rear=mk(.62,panelH,.04,mat.doorGlass,panelH/2+.08,-.22); rear.position[across]-=.025;
+      const front=mk(.62,panelH,.04,mat.doorGlass,panelH/2+.08,.22); front.position[across]+=.045;
+      rear.userData.doorSlide={edgeId:e.id,axis:along,base:rear.position[along],dir:-1,amount:.34};
+      front.userData.doorSlide={edgeId:e.id,axis:along,base:front.position[along],dir:1,amount:.34};
       g.add(rear,front);
-      g.add(mk(.035,1.95,.055,mat.metal,.98,.0));
+      g.add(mk(.035,panelH,.055,mat.metal,panelH/2+.08,0));
+      addHandle(.34,1);
     }
   } else if(def.kind==='window'){
     const totalH=2.55;
@@ -511,18 +541,17 @@ function makeEdgeModel(e){
     if(top>0){ g.add(mk(1,top,thick,mat.wall,sill+glassH+top/2,0)); }
 
     const glass=mk(glassW,glassH,glassDepth,glassMat,sill+glassH/2,0); glass.position[across]+=.002; g.add(glass);
-    // outside frame only: allows a row of windows/full-height glass to flow without a centre bar.
     g.add(mk(1.0,.055,thick*.9,frameMat,sill,0));
     g.add(mk(1.0,.055,thick*.9,frameMat,sill+glassH,0));
     g.add(mk(.045,glassH+.09,thick*.9,frameMat,sill+glassH/2,-.5+.022));
     g.add(mk(.045,glassH+.09,thick*.9,frameMat,sill+glassH/2,.5-.022));
   } else {
-    const wall=mk(1,h,thick,material,h/2,0); g.add(wall);
+    const wall=mk(span,h,thick,material,h/2,0); g.add(wall);
     if(def.mullions){
       const m1=mk(.035,h*.88,thick*.75,mat.metal,h*.48,-.28); const m2=mk(.035,h*.88,thick*.75,mat.metal,h*.48,.28); g.add(m1,m2);
     }
   }
-  g.traverse(o=>{ if(o.isMesh){ o.userData={kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g;
+  g.traverse(o=>{ if(o.isMesh){ o.userData={...o.userData,kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g;
 }
 
 function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.142,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
@@ -685,7 +714,7 @@ function buildPassability(){
 }
 function wallBlocksBetween(ax,az,bx,bz){
   let dir,x,z; if(ax===bx){ dir='h'; x=ax; z=Math.max(az,bz); } else { dir='v'; x=Math.max(ax,bx); z=az; }
-  const e=state.edges.find(e=>e.x===x&&e.z===z&&e.dir===dir); if(!e) return false; return !!edgeDef(e.type).blocks;
+  const e=edgeAtSegment(x,z,dir); if(!e) return false; return !!edgeDef(e.type).blocks;
 }
 function findPath(start,goal){
   const walk=buildPassability(); const open=[start]; const came=new Map(); const g=new Map([[`${start.x},${start.z}`,0]]); const goalKey=`${goal.x},${goal.z}`; const seen=new Set();
@@ -695,7 +724,7 @@ function findPath(start,goal){
 }
 function reconstruct(came,cur){ const path=[cur]; while(came.has(`${cur.x},${cur.z}`)){ cur=came.get(`${cur.x},${cur.z}`); path.push(cur); } return path.reverse(); }
 function nearestTargetCell(item){ const candidates=[]; for(let x=item.x-1;x<=item.x+item.w;x++){ candidates.push({x,z:item.z-1}); candidates.push({x,z:item.z+item.h}); } for(let z=item.z;z<item.z+item.h;z++){ candidates.push({x:item.x-1,z}); candidates.push({x:item.x+item.w,z}); } const walk=buildPassability(); return candidates.find(c=>c.x>=0&&c.z>=0&&c.x<state.maxW&&c.z<state.maxH&&walk[c.x][c.z]) || {x:item.x,z:item.z}; }
-function entranceCell(){ const doors=state.edges.filter(e=>edgeDef(e.type)?.kind==='door'); if(doors.length){ const d=doors[0]; const inside = d.dir==='h' ? {x:d.x,z:clamp(d.z,0,state.maxH-1)} : {x:clamp(d.x,0,state.maxW-1),z:d.z}; if(isUnlockedCell(inside.x,inside.z)) return inside; }
+function entranceCell(){ const doors=state.edges.filter(e=>edgeDef(e.type)?.kind==='door'); if(doors.length){ const d=doors[0]; const span=edgeSpan(d.type); const inside = d.dir==='h' ? {x:clamp(d.x+Math.floor(span/2),0,state.maxW-1),z:clamp(d.z,0,state.maxH-1)} : {x:clamp(d.x,0,state.maxW-1),z:clamp(d.z+Math.floor(span/2),0,state.maxH-1)}; if(isUnlockedCell(inside.x,inside.z)) return inside; }
   return {x:buildOffsetX()+1,z:buildOffsetZ()+1}; }
 
 function spawnVisitor(){
@@ -872,6 +901,29 @@ function toast(msg){ ui.toast.textContent=msg; ui.toast.classList.remove('hidden
 function saveGame(){ const data={...state, visitors:[]}; localStorage.setItem(SAVE_KEY,JSON.stringify(data)); toast('Game saved in this browser.'); }
 function loadGame(){ const raw=localStorage.getItem(SAVE_KEY); if(!raw){ toast('No save found yet.'); return; } const data=JSON.parse(raw); Object.assign(state,data,{visitors:[]}); nextId=Math.max(1,...state.floors.map(f=>f.id+1),...state.edges.map(e=>e.id+1),...state.items.map(i=>i.id+1)); groups.people.clear(); rebuildPlot(); rebuildAll(); updateUi(true); toast('Save loaded.'); }
 
+
+function animateDoors(dt){
+  const doorEdges=state.edges.filter(e=>edgeDef(e.type)?.kind==='door');
+  if(!doorEdges.length) return;
+  const visitors=state.visitors.map(v=>v.mesh.position);
+  groups.edges.traverse(o=>{
+    const anim=o.userData?.doorLeaf || o.userData?.doorSlide;
+    if(!anim) return;
+    const edge=state.edges.find(e=>e.id===anim.edgeId); if(!edge) return;
+    const center=edgeWorld(edge.x,edge.z,edge.dir,edgeSpan(edge.type));
+    const open=visitors.some(p=>Math.hypot(p.x-center.x,p.z-center.z)<1.35);
+    const k=1-Math.pow(.001,dt);
+    if(o.userData.doorLeaf){
+      const target=(open?0.92:0)*anim.openDir;
+      o.rotation.y += (target-o.rotation.y)*k;
+    }
+    if(o.userData.doorSlide){
+      const target=anim.base+(open?anim.amount*anim.dir:0);
+      o.position[anim.axis] += (target-o.position[anim.axis])*k;
+    }
+  });
+}
+
 function updateCameraMovement(dt){
   if(!keyState.size) return;
   const move=new THREE.Vector3();
@@ -889,5 +941,5 @@ function updateCameraMovement(dt){
   const dz=clamp(controls.target.z,minZ,maxZ)-controls.target.z;
   if(dx||dz){ camera.position.x+=dx; controls.target.x+=dx; camera.position.z+=dz; controls.target.z+=dz; }
 }
-function animate(){ const dt=Math.min(clock.getDelta(),.05); updateCameraMovement(dt); controls.update(); updateVisitors(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
+function animate(){ const dt=Math.min(clock.getDelta(),.05); updateCameraMovement(dt); controls.update(); updateVisitors(dt); animateDoors(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
 function animateWater(){ const t=performance.now()*.001; groups.items.traverse(o=>{ if(o.material===mat.water) o.position.y += Math.sin(t*2)*.0008; }); }
