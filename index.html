@@ -9,7 +9,6 @@
     <div id="app">
       <canvas id="game"></canvas>
       <div id="vignette"></div>
-
       <aside id="hud" class="panel glass">
         <div class="brand">
           <div class="brand-icon">LC</div>
@@ -53,27 +52,15 @@
 
       <aside id="inspector" class="panel glass">
         <h2 id="inspectTitle">Welcome</h2>
-        <p id="inspectBody">
-          Start by placing reception, then add cardio, weights, pool, sauna,
-          studio and a juice bar. Members will visit, spend money and rate the club.
-        </p>
-
+        <p id="inspectBody">Start by placing reception, then add cardio, weights, pool, sauna, studio and a juice bar. Members will visit, spend money and rate the club.</p>
         <div class="progress">
-          <div class="progress-label">
-            <span>Cleanliness</span>
-            <strong id="cleanText">100%</strong>
-          </div>
+          <div class="progress-label"><span>Cleanliness</span><strong id="cleanText">100%</strong></div>
           <div class="bar"><i id="cleanBar"></i></div>
         </div>
-
         <div class="progress">
-          <div class="progress-label">
-            <span>Luxury Feel</span>
-            <strong id="luxuryText">0%</strong>
-          </div>
+          <div class="progress-label"><span>Luxury Feel</span><strong id="luxuryText">0%</strong></div>
           <div class="bar"><i id="luxuryBar"></i></div>
         </div>
-
         <div class="objective-card">
           <h3>Objectives</h3>
           <ul id="objectives"></ul>
@@ -81,13 +68,11 @@
       </aside>
 
       <div id="toast" class="toast hidden"></div>
-
       <div id="mobileControls" class="mobile-controls">
         <button id="mobileRotate">↻</button>
         <button id="mobileCancel">×</button>
       </div>
     </div>
-
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
