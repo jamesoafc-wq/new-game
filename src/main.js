@@ -30,15 +30,15 @@ controls.update();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(99, 99);
 const clock = new THREE.Clock();
-const SAVE_KEY = 'leisure-club-tycoon-builder-v7';
+const SAVE_KEY = 'leisure-club-tycoon-builder-v8';
 
 const ui = {
   cash: $('#cash'), members: $('#members'), rating: $('#rating'), rep: $('#rep'), day: $('#day'), clock: $('#clock'),
-  selectedHint: $('#selectedHint'), categoryTabs: $('#categoryTabs'), buildMenu: $('#buildMenu'), staffMenu: $('#staffMenu'),
+  selectedHint: $('#selectedHint'), categoryTabs: $('#categoryTabs'), buildMenu: $('#buildMenu'), buildSearch: $('#buildSearch'), staffMenu: $('#staffMenu'),
   inspectTitle: $('#inspectTitle'), inspectBody: $('#inspectBody'), cleanText: $('#cleanText'), cleanBar: $('#cleanBar'),
-  luxuryText: $('#luxuryText'), luxuryBar: $('#luxuryBar'), routeText: $('#routeText'), routeBar: $('#routeBar'), objectives: $('#objectives'),
+  luxuryText: $('#luxuryText'), luxuryBar: $('#luxuryBar'), routeText: $('#routeText'), routeBar: $('#routeBar'), objectives: $('#objectives'), inspectorMeta: $('#inspectorMeta'),
   toast: $('#toast'), rotateBtn: $('#rotateBtn'), deselectBtn: $('#deselectBtn'), bulldozeBtn: $('#bulldozeBtn'), expandBtn: $('#expandBtn'),
-  saveBtn: $('#saveBtn'), loadBtn: $('#loadBtn'), resetBtn: $('#resetBtn'), mobileRotate: $('#mobileRotate'), mobileDeselect: $('#mobileDeselect')
+  saveBtn: $('#saveBtn'), loadBtn: $('#loadBtn'), resetBtn: $('#resetBtn'), pathToggleBtn: $('#pathToggleBtn'), blockedToggleBtn: $('#blockedToggleBtn'), focusSelectedBtn: $('#focusSelectedBtn'), sellSelectedBtn: $('#sellSelectedBtn'), mobileRotate: $('#mobileRotate'), mobileDeselect: $('#mobileDeselect')
 };
 
 const C = {
@@ -78,6 +78,9 @@ const mat = {
   orange: new THREE.MeshStandardMaterial({ color: C.orange, roughness: 0.52 }),
   water: new THREE.MeshPhysicalMaterial({ color: C.water, roughness: 0.04, transparent: true, opacity: 0.76, transmission: 0.14 }),
   shadow: new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16 }),
+  debugPath: new THREE.MeshBasicMaterial({ color: 0x71ffca, transparent: true, opacity: 0.36 }),
+  debugBlocked: new THREE.MeshBasicMaterial({ color: 0xff667a, transparent: true, opacity: 0.28 }),
+  gateGlow: new THREE.MeshBasicMaterial({ color: 0x4dff85, transparent: true, opacity: 0.0 }),
   ghostGood: new THREE.MeshStandardMaterial({ color: 0x7dffe2, transparent: true, opacity: 0.44 }),
   ghostBad: new THREE.MeshStandardMaterial({ color: 0xff667a, transparent: true, opacity: 0.45 }),
   ghostEdge: new THREE.MeshStandardMaterial({ color: 0xf8d46e, transparent: true, opacity: 0.58 })
@@ -129,7 +132,7 @@ const openingTypes = [
 
 const itemDefs = {
   receptionDesk:{cat:'clubhouse',name:'Reception Desk',emoji:'🛎️',cost:800,size:[2,1],income:9,appeal:8,capacity:4,blocks:true,desc:'Check-in desk. Staff work better near this.',build:makeReceptionDesk},
-  turnstile:{cat:'clubhouse',name:'Access Gates',emoji:'🎫',cost:430,size:[2,1],income:4,appeal:5,capacity:8,blocks:true,desc:'Member access gates near entrance.',build:makeTurnstile},
+  turnstile:{cat:'clubhouse',name:'Access Gates',emoji:'🎫',cost:680,size:[2,1],income:4,appeal:8,capacity:12,blocks:true,desc:'Required entry gates. Members queue one-by-one, the paddles open, and a green scanner flashes as they pass.',build:makeTurnstile},
   cafeCounter:{cat:'clubhouse',name:'Cafe Counter',emoji:'☕',cost:1050,size:[3,1],income:34,appeal:9,capacity:6,blocks:true,desc:'Cafe counter for post-workout spend.',build:makeCafeCounter},
   loungeSofa:{cat:'clubhouse',name:'Lounge Sofa',emoji:'🛋️',cost:420,size:[2,1],income:5,appeal:8,capacity:4,blocks:true,desc:'Members lounge seating.',build:makeSofa},
   lockerBank:{cat:'clubhouse',name:'Locker Bank',emoji:'🔐',cost:550,size:[2,1],income:3,appeal:7,capacity:8,blocks:true,desc:'Changing room storage.',build:makeLockerBank},
@@ -166,7 +169,32 @@ const itemDefs = {
   waterFeature:{cat:'decor',name:'Water Feature',emoji:'⛲',cost:850,size:[2,2],income:0,appeal:12,capacity:0,blocks:true,desc:'Luxury lobby/spa statement.',build:makeWaterFeature},
   wallArt:{cat:'decor',name:'Wall Art',emoji:'🖼️',cost:220,size:[1,1],income:0,appeal:5,capacity:0,blocks:true,wallFriendly:true,desc:'Decor that sits neatly by walls.',build:makeWallArt},
   towelStand:{cat:'decor',name:'Towel Stand',emoji:'🧺',cost:180,size:[1,1],income:1,appeal:4,capacity:0,blocks:true,desc:'Pool/spa detail.',build:makeTowelStand},
-  plantWall:{cat:'decor',name:'Living Plant Wall',emoji:'🌱',cost:650,size:[2,1],income:0,appeal:10,capacity:0,blocks:true,wallFriendly:true,desc:'Premium feature wall.',build:makePlantWall}
+  plantWall:{cat:'decor',name:'Living Plant Wall',emoji:'🌱',cost:650,size:[2,1],income:0,appeal:10,capacity:0,blocks:true,wallFriendly:true,desc:'Premium feature wall.',build:makePlantWall},
+
+  // Reception and cafe expansion
+  membershipKiosk:{cat:'clubhouse',name:'Membership Kiosk',emoji:'📱',cost:480,size:[1,1],income:7,appeal:7,capacity:3,blocks:true,desc:'Self-service joining/check-in station for reception.',build:makeMembershipKiosk},
+  receptionLogoWall:{cat:'clubhouse',name:'Logo Feature Wall',emoji:'🏷️',cost:720,size:[2,1],income:0,appeal:13,capacity:0,blocks:true,wallFriendly:true,desc:'Premium branded reception backdrop.',build:makeLogoWall},
+  cafeTable:{cat:'clubhouse',name:'Cafe Table Set',emoji:'🍽️',cost:390,size:[2,2],income:12,appeal:8,capacity:4,blocks:true,desc:'Small table, chairs and cafe spend.',build:makeCafeTable},
+  baristaMachine:{cat:'clubhouse',name:'Barista Station',emoji:'☕',cost:780,size:[1,1],income:24,appeal:8,capacity:2,blocks:true,desc:'Coffee machine detail to support the cafe counter.',build:makeBaristaStation},
+  retailWall:{cat:'clubhouse',name:'Retail Display Wall',emoji:'👕',cost:620,size:[2,1],income:20,appeal:7,capacity:2,blocks:true,wallFriendly:true,desc:'Sells towels, drinks and branded kit.',build:makeRetailWall},
+
+  // Better pool options
+  smallPool:{cat:'poolspa',name:'Small Spa Pool',emoji:'💧',cost:2400,size:[3,2],income:28,appeal:13,capacity:4,blocks:true,desc:'Compact tiled pool with coping, steps and moving water.',build:makeSmallPool},
+  familyPool:{cat:'poolspa',name:'Family Pool',emoji:'🏊',cost:4600,size:[4,3],income:48,appeal:18,capacity:8,blocks:true,desc:'Larger club pool with steps and poolside detail.',build:makeFamilyPool},
+  hydroPool:{cat:'poolspa',name:'Hydro Pool',emoji:'♨️',cost:3900,size:[3,3],income:45,appeal:18,capacity:6,blocks:true,desc:'Rounded bubbling spa pool for premium wellness clubs.',build:makeHydroPool},
+  largeLapPool:{cat:'poolspa',name:'Large Lap Pool',emoji:'🏊',cost:7200,size:[8,3],income:72,appeal:24,capacity:12,blocks:true,desc:'Long lane pool with markings, ladders and tiled coping.',build:makeLargeLapPool},
+
+  // Outdoor section - 10 high quality items
+  padelCourt:{cat:'outdoor',name:'Padel Court',emoji:'🎾',cost:5200,size:[6,4],income:58,appeal:19,capacity:4,blocks:true,outdoor:true,desc:'Glass-sided padel court with nets and court markings.',build:makePadelCourt},
+  tennisCourt:{cat:'outdoor',name:'Tennis Court',emoji:'🎾',cost:6200,size:[7,4],income:54,appeal:18,capacity:4,blocks:true,outdoor:true,desc:'Outdoor tennis court with net, fencing and painted lines.',build:makeTennisCourt},
+  sunBedPair:{cat:'outdoor',name:'Sun Bed Pair',emoji:'🛏️',cost:520,size:[2,1],income:10,appeal:8,capacity:2,blocks:true,outdoor:true,desc:'Poolside loungers for spa resort feel.',build:makeSunBedPair},
+  parasolSet:{cat:'outdoor',name:'Parasol Table',emoji:'⛱️',cost:620,size:[2,2],income:12,appeal:9,capacity:4,blocks:true,outdoor:true,desc:'Outdoor table with umbrella and chairs.',build:makeParasolSet},
+  outdoorHotTub:{cat:'outdoor',name:'Outdoor Hot Tub',emoji:'♨️',cost:2600,size:[2,2],income:38,appeal:16,capacity:4,blocks:true,outdoor:true,desc:'Bubbling outdoor wellness tub.',build:makeOutdoorHotTub},
+  gardenYogaDeck:{cat:'outdoor',name:'Garden Yoga Deck',emoji:'🧘',cost:1800,size:[3,3],income:26,appeal:13,capacity:8,blocks:true,outdoor:true,desc:'Timber deck with mats and soft outdoor lighting.',build:makeGardenYogaDeck},
+  outdoorLounge:{cat:'outdoor',name:'Outdoor Lounge',emoji:'🛋️',cost:1600,size:[3,2],income:19,appeal:14,capacity:6,blocks:true,outdoor:true,desc:'Premium sofa seating for terrace areas.',build:makeOutdoorLounge},
+  firePit:{cat:'outdoor',name:'Fire Pit Seating',emoji:'🔥',cost:1400,size:[3,3],income:16,appeal:15,capacity:6,blocks:true,outdoor:true,desc:'Evening social space with circular seating.',build:makeFirePit},
+  bikeRack:{cat:'outdoor',name:'Bike Rack',emoji:'🚲',cost:420,size:[2,1],income:3,appeal:5,capacity:0,blocks:true,outdoor:true,desc:'Useful front-of-club detail for members.',build:makeBikeRack},
+  outdoorShower:{cat:'outdoor',name:'Outdoor Shower',emoji:'🚿',cost:620,size:[1,1],income:4,appeal:7,capacity:1,blocks:true,outdoor:true,desc:'Poolside outdoor shower column.',build:makeOutdoorShower}
 };
 
 const staffDefs = {
@@ -186,28 +214,31 @@ const categories = [
   { id:'studio', label:'Studio', emoji:'🧘', itemsByCat:true },
   { id:'poolspa', label:'Pool & Spa', emoji:'🏊', itemsByCat:true },
   { id:'clubhouse', label:'Clubhouse', emoji:'☕', itemsByCat:true },
-  { id:'decor', label:'Decor', emoji:'🌿', itemsByCat:true }
+  { id:'decor', label:'Decor', emoji:'🌿', itemsByCat:true },
+  { id:'outdoor', label:'Outdoor', emoji:'🌤️', itemsByCat:true }
 ];
 
 const objectives = [
   { text:'Lay at least 20 floor tiles', done:()=>state.floors.length >= 20 },
   { text:'Build an entrance with a door', done:()=>state.edges.some(e=>edgeDef(e.type)?.kind === 'door') },
-  { text:'Place reception and 8 gym items', done:()=>hasItem('receptionDesk') && state.items.filter(i=>['freeweights','cardio'].includes(itemDefs[i.type].cat)).length >= 8 },
+  { text:'Place access gates for members', done:()=>hasItem('turnstile') },
+  { text:'Place reception and 8 gym items', done:()=>hasItem('receptionDesk') && hasItem('turnstile') && state.items.filter(i=>['freeweights','cardio'].includes(itemDefs[i.type].cat)).length >= 8 },
   { text:'Hire cleaner and receptionist', done:()=>state.staff.cleaner > 0 && state.staff.receptionist > 0 },
   { text:'Reach 70 members', done:()=>state.members >= 70 },
-  { text:'Expand the plot once', done:()=>state.expansions >= 1 }
+  { text:'Expand the plot once', done:()=>state.expansions >= 1 },
+  { text:'Add one outdoor leisure item', done:()=>state.items.some(i=>itemDef(i.type).cat==='outdoor') }
 ];
 
 const state = {
-  cash: 18000, members: 0, rating: 54, reputation: 0, day: 1, minute: 6*60,
+  cash: 24000, members: 0, rating: 54, reputation: 0, day: 1, minute: 6*60,
   cleanliness: 100, routeScore: 100, luxury: 0,
   buildW: 26, buildH: 18, maxW: 56, maxH: 44, expansions: 0,
-  mode: 'floor', category: 'floors', selectedId: 'concrete', rotation: 0, bulldoze: false,
+  mode: 'floor', category: 'floors', selectedId: 'concrete', rotation: 0, bulldoze: false, showPaths:false, showBlocked:false,
   floors: [], edges: [], items: [], visitors: [], staff: { receptionist:0, cleaner:0, instructor:0, lifeguard:0, therapist:0 }
 };
 
-const groups = { env:new THREE.Group(), plot:new THREE.Group(), grid:new THREE.Group(), floors:new THREE.Group(), edges:new THREE.Group(), items:new THREE.Group(), people:new THREE.Group(), staff:new THREE.Group(), previews:new THREE.Group() };
-scene.add(groups.env, groups.plot, groups.grid, groups.floors, groups.edges, groups.items, groups.people, groups.staff, groups.previews);
+const groups = { env:new THREE.Group(), plot:new THREE.Group(), grid:new THREE.Group(), floors:new THREE.Group(), edges:new THREE.Group(), items:new THREE.Group(), people:new THREE.Group(), staff:new THREE.Group(), debug:new THREE.Group(), previews:new THREE.Group() };
+scene.add(groups.env, groups.plot, groups.grid, groups.floors, groups.edges, groups.items, groups.people, groups.staff, groups.debug, groups.previews);
 
 const placementPlane = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({ visible:false }));
 placementPlane.rotation.x = -Math.PI / 2;
@@ -224,6 +255,9 @@ let isDragging = false;
 let pathCacheVersion = 0;
 let lastRouteCheck = 0;
 let simAcc = 0;
+let trafficCars = [];
+let gateQueue = [];
+let activeGateVisitor = null;
 const keyState = new Set();
 
 initLights();
@@ -272,11 +306,12 @@ function initLights(){
 
 function buildEnvironment(){
   groups.env.clear();
+  trafficCars = [];
   const grass = box(170,0.12,145,mat.grass,false); grass.position.y=-0.08; groups.env.add(grass);
   addRoad(0,-40,170,10); addRoad(-44,0,10,145); addRoad(48,0,8,145);
   addPath(0, -29, 30, 3.2); addPath(-18, -24, 3, 22); addPath(21, -23, 3, 20);
   makeTownBuilding(-62,-32,9,7,5,0xd8c4aa); makeTownBuilding(-52,31,10,8,7,0xc4ced8); makeTownBuilding(56,32,12,9,8,0xd7bfa2); makeTownBuilding(62,-16,10,7,6,0xbecbd0); makeTownBuilding(5,52,18,7,6,0xcfc4b2); makeTownBuilding(-25,50,14,8,7,0xbcd2c7);
-  for(let i=0;i<58;i++) makeTree(-78 + Math.random()*156, -64 + Math.random()*128, 0.8+Math.random()*0.7);
+  for(let i=0;i<64;i++) makeTree(-78 + Math.random()*156, -64 + Math.random()*128, 0.8+Math.random()*0.7);
   for(let i=0;i<15;i++) makeStreetLight(-40+i*5.8, -34.5);
   for(let i=0;i<10;i++) makeCar(-31+i*6.4, -42.5, i%3);
   makePlotSign(-19, -32.2);
@@ -286,9 +321,34 @@ function buildEnvironment(){
 function addRoad(x,z,w,d){ const road=box(w,0.05,d,mat.road,false); road.position.set(x,-0.01,z); groups.env.add(road); const l1=box(w,0.065,0.14,mat.kerb,false); l1.position.set(x,0.03,z-d/2+0.5); groups.env.add(l1); const l2=box(w,0.065,0.14,mat.kerb,false); l2.position.set(x,0.03,z+d/2-0.5); groups.env.add(l2); }
 function addPath(x,z,w,d){ const p=box(w,0.055,d,mat.path,false); p.position.set(x,0.02,z); groups.env.add(p); }
 function makeTownBuilding(x,z,w,d,h,color){ const m=new THREE.MeshStandardMaterial({color, roughness:.68}); const b=box(w,h,d,m,true); b.position.set(x,h/2,z); groups.env.add(b); const roof=box(w+.8,.6,d+.8,mat.dark,true); roof.position.set(x,h+.3,z); groups.env.add(roof); for(let ix=-1; ix<=1; ix++){ const win=box(.8,1,.08,mat.glass,true); win.position.set(x+ix*w/4, h*.55, z-d/2-.05); groups.env.add(win); }}
-function makeTree(x,z,s=1){ if(Math.abs(x)<30 && Math.abs(z)<24) return; const trunk=cylinder(.13*s,.18*s,1.2*s,mat.wood); trunk.position.set(x,.6*s,z); groups.env.add(trunk); const crown=new THREE.Mesh(new THREE.ConeGeometry(.9*s,2*s,8), mat.green); crown.position.set(x,1.85*s,z); crown.castShadow=true; crown.receiveShadow=true; groups.env.add(crown); }
+function makeTree(x,z,s=1){ if(Math.abs(x)<33 && Math.abs(z)<27) return; if(Math.abs(z+40)<7 || Math.abs(x+44)<7 || Math.abs(x-48)<6) return; const trunk=cylinder(.13*s,.18*s,1.2*s,mat.wood); trunk.position.set(x,.6*s,z); groups.env.add(trunk); const crown=new THREE.Mesh(new THREE.ConeGeometry(.9*s,2*s,8), mat.green); crown.position.set(x,1.85*s,z); crown.castShadow=true; crown.receiveShadow=true; groups.env.add(crown); }
 function makeStreetLight(x,z){ const pole=cylinder(.04,.05,3,mat.metal); pole.position.set(x,1.5,z); groups.env.add(pole); const head=box(.8,.13,.25,mat.gold,true); head.position.set(x+.25,3.05,z); groups.env.add(head); }
-function makeCar(x,z,i){ const cols=[mat.blue,mat.red,mat.orange]; const body=box(2.1,.55,1.05,cols[i],true); body.position.set(x,.32,z); groups.env.add(body); const top=box(1.15,.45,.85,mat.glass,true); top.position.set(x,.82,z); groups.env.add(top); }
+function makeCar(x,z,i){
+  const cols=[mat.blue,mat.red,mat.orange,mat.teal,mat.gold];
+  const car=new THREE.Group();
+  const body=box(2.25,.46,1.02,cols[i%cols.length],true); body.position.y=.36; car.add(body);
+  const bonnet=box(.72,.28,.92,cols[i%cols.length],true); bonnet.position.set(.72,.56,0); car.add(bonnet);
+  const cab=box(.88,.48,.82,mat.glass,true); cab.position.set(-.18,.74,0); car.add(cab);
+  const boot=box(.48,.25,.9,cols[i%cols.length],true); boot.position.set(-.9,.54,0); car.add(boot);
+  [-.72,.72].forEach(px=>[-.48,.48].forEach(pz=>{ const w=cylinder(.16,.16,.11,mat.dark); w.rotation.x=Math.PI/2; w.position.set(px,.16,pz); car.add(w); }));
+  const light1=box(.08,.09,.25,mat.gold,true); light1.position.set(1.16,.42,-.28); car.add(light1);
+  const light2=box(.08,.09,.25,mat.gold,true); light2.position.set(1.16,.42,.28); car.add(light2);
+  car.position.set(x,.03,z);
+  car.userData.car={speed:4.8+Math.random()*2.4, lane:z, dir:i%2?1:-1, wrap:82};
+  if(car.userData.car.dir<0) car.rotation.y=Math.PI;
+  trafficCars.push(car); groups.env.add(car);
+}
+
+function updateTraffic(dt){
+  for(const car of trafficCars){
+    const d=car.userData.car;
+    car.position.x += d.speed * d.dir * dt;
+    car.children.forEach(ch=>{ if(ch.geometry?.type==='CylinderGeometry') ch.rotation.z += dt*d.speed*3*d.dir; });
+    if(d.dir>0 && car.position.x>d.wrap) car.position.x=-d.wrap;
+    if(d.dir<0 && car.position.x<-d.wrap) car.position.x=d.wrap;
+  }
+}
+
 function makePlotSign(x,z){ const p1=cylinder(.05,.05,1.2,mat.wood); p1.position.set(x-.9,.65,z); groups.env.add(p1); const p2=cylinder(.05,.05,1.2,mat.wood); p2.position.set(x+.9,.65,z); groups.env.add(p2); const sign=box(2.4,.8,.08,mat.dark,true); sign.position.set(x,1.15,z); groups.env.add(sign); const spr=makeTextSprite('Future Leisure Club'); spr.position.set(x,1.17,z-.08); spr.scale.set(2,.45,1); groups.env.add(spr); }
 
 function rebuildPlot(){
@@ -327,7 +387,10 @@ function getCategoryItems(catId){ const cat=categories.find(c=>c.id===catId); if
 function makeBuildMenu(){
   ui.buildMenu.innerHTML='';
   [...ui.categoryTabs.children].forEach(b=>b.classList.toggle('active', b.dataset.cat===state.category));
-  getCategoryItems(state.category).forEach(def=>{
+  const q=(ui.buildSearch?.value||'').trim().toLowerCase();
+  const items=getCategoryItems(state.category).filter(def=>!q || `${def.name} ${def.desc||''} ${def.id}`.toLowerCase().includes(q));
+  if(!items.length){ const empty=document.createElement('div'); empty.className='empty-build'; empty.textContent='No matching build items.'; ui.buildMenu.appendChild(empty); return; }
+  items.forEach(def=>{
     const id=def.id;
     const btn=document.createElement('button'); btn.className='build-card'; btn.dataset.id=id;
     btn.innerHTML=`<span class="emoji">${def.emoji}</span><strong>${def.name}</strong><small><span class="cost">${money(def.cost)}</span>${def.size?` · ${def.size[0]}x${def.size[1]}`:def.span?` · ${def.span} edges`:''}<br>${def.desc||''}</small>`;
@@ -368,6 +431,11 @@ function wireEvents(){
   ui.deselectBtn.addEventListener('click',deselect); ui.mobileDeselect.addEventListener('click',deselect);
   ui.bulldozeBtn.addEventListener('click',toggleBulldoze); ui.expandBtn.addEventListener('click',expandPlot);
   ui.saveBtn.addEventListener('click',saveGame); ui.loadBtn.addEventListener('click',loadGame);
+  ui.pathToggleBtn.addEventListener('click',()=>{ state.showPaths=!state.showPaths; rebuildDebugOverlay(); updateUi(true); });
+  ui.blockedToggleBtn.addEventListener('click',()=>{ state.showBlocked=!state.showBlocked; rebuildDebugOverlay(); updateUi(true); });
+  ui.focusSelectedBtn.addEventListener('click',focusSelectedThing);
+  ui.sellSelectedBtn.addEventListener('click',sellSelectedThing);
+  ui.buildSearch.addEventListener('input',()=>makeBuildMenu());
   ui.resetBtn.addEventListener('click',()=>{ if(confirm('Reset your leisure club?')){ localStorage.removeItem(SAVE_KEY); location.reload(); }});
 }
 function onResize(){ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
@@ -455,14 +523,54 @@ function removeThing(kind,id){
   if(kind==='floor'){ const f=state.floors.find(f=>f.id===id); if(!f) return; state.cash+=Math.round(floorDef(f.type).cost*.2); state.floors=state.floors.filter(x=>x.id!==id); rebuildFloors(); toast('Floor tile removed.'); }
   selectedThing=null; updateUi(true);
 }
-function inspectThing(kind,id){ selectedThing={kind,id}; let title='Selected', body='';
-  if(kind==='item'){ const it=state.items.find(i=>i.id===id); if(!it) return; const def=itemDef(it.type); title=`${def.emoji} ${def.name}`; body=`${def.desc} Visits today: ${it.visits}. Condition: ${Math.round(it.condition)}%. Footprint: ${it.w}x${it.h}.`; }
-  if(kind==='edge'){ const e=state.edges.find(e=>e.id===id); if(!e) return; const def=edgeDef(e.type); title=`${def.emoji} ${def.name}`; body=`${def.desc} It is placed on a grid edge, so equipment can sit cleanly next to it.`; }
-  if(kind==='floor'){ const f=state.floors.find(f=>f.id===id); if(!f) return; const def=floorDef(f.type); title=`${def.emoji} ${def.name}`; body=`${def.desc} Floor tiles do not come built into equipment any more.`; }
-  ui.inspectTitle.textContent=title; ui.inspectBody.textContent=body;
+function inspectThing(kind,id){
+  selectedThing={kind,id}; let title='Selected', body='', meta=[];
+  if(kind==='item'){
+    const it=state.items.find(i=>i.id===id); if(!it) return; const def=itemDef(it.type);
+    const reachable=isItemReachable(it);
+    const queue=state.visitors.filter(v=>v.targetId===id || v.finalTargetId===id).length;
+    const income=it.visits*Math.round(def.income*(.8+state.rating/100));
+    title=`${def.emoji} ${def.name}`;
+    body=`${def.desc} ${it.type==='turnstile'?'Members must queue through this before using anything else.':''}`;
+    meta=[['Condition',`${Math.round(it.condition)}%`],['Visits today',it.visits],['Popularity',queue?`${queue} heading here`:'Low'],['Income today',money(income)],['Footprint',`${it.w}x${it.h}`],['Reachable',reachable?'Yes':'No route']];
+  }
+  if(kind==='edge'){
+    const e=state.edges.find(e=>e.id===id); if(!e) return; const def=edgeDef(e.type);
+    title=`${def.emoji} ${def.name}`; body=`${def.desc} It is placed on a grid edge, so equipment can sit cleanly next to it.`;
+    meta=[['Type',def.kind],['Blocks route',def.blocks?'Yes':'No'],['Span',`${edgeSpan(def)} edge${edgeSpan(def)>1?'s':''}`],['Position',`${e.x},${e.z}`]];
+  }
+  if(kind==='floor'){
+    const f=state.floors.find(f=>f.id===id); if(!f) return; const def=floorDef(f.type);
+    title=`${def.emoji} ${def.name}`; body=`${def.desc} Floor tiles do not come built into equipment any more.`;
+    meta=[['Type','Floor'],['Cost',money(def.cost)],['Position',`${f.x},${f.z}`],['Build area',isUnlockedCell(f.x,f.z)?'Unlocked':'Locked']];
+  }
+  ui.inspectTitle.textContent=title; ui.inspectBody.textContent=body; renderInspectorMeta(meta);
+}
+function renderInspectorMeta(meta=[]){
+  if(!ui.inspectorMeta) return;
+  ui.inspectorMeta.innerHTML=meta.map(([k,v])=>`<div class="meta-chip"><span>${k}</span><strong>${v}</strong></div>`).join('');
+}
+function isItemReachable(it){
+  const gate=accessGates()[0]; const start=gate?gateCenterCell(gate):entranceCell();
+  return !!findPath(start,nearestTargetCell(it));
+}
+function focusSelectedThing(){
+  if(!selectedThing){ toast('Select an object first.'); return; }
+  let pos=null;
+  if(selectedThing.kind==='item'){ const it=state.items.find(i=>i.id===selectedThing.id); if(it) pos=tileToWorld(it.x,it.z,it.w,it.h); }
+  if(selectedThing.kind==='floor'){ const f=state.floors.find(f=>f.id===selectedThing.id); if(f) pos=tileToWorld(f.x,f.z); }
+  if(selectedThing.kind==='edge'){ const e=state.edges.find(e=>e.id===selectedThing.id); if(e) pos=edgeWorld(e.x,e.z,e.dir,edgeSpan(e.type)); }
+  if(!pos) return;
+  const delta=new THREE.Vector3(pos.x-controls.target.x,0,pos.z-controls.target.z);
+  controls.target.add(delta); camera.position.add(delta); controls.update();
+}
+function sellSelectedThing(){
+  if(!selectedThing){ toast('Select an object first.'); return; }
+  removeThing(selectedThing.kind,selectedThing.id);
 }
 
-function rebuildAll(){ rebuildFloors(); rebuildEdges(); rebuildItems(); rebuildStaff(); }
+
+function rebuildAll(){ rebuildFloors(); rebuildEdges(); rebuildItems(); rebuildStaff(); rebuildDebugOverlay(); }
 function rebuildFloors(){ groups.floors.clear(); state.floors.forEach(f=>{ const def=floorDef(f.type); const m=new THREE.MeshStandardMaterial({color:def.color, roughness:.72}); const tile=box(1.012,.055,1.012,m,false); const p=tileToWorld(f.x,f.z); tile.position.set(p.x,.118,p.z); tile.userData={kind:'floor',id:f.id}; groups.floors.add(tile); addFloorPattern(tile,def,f); }); }
 function addFloorPattern(tile,def,f){ if(['rubberGreen','poolTile','courtWood','kidsFoam','cafeTerrazzo'].includes(def.id)){ const line=box(.92,.01,.035,mat.dark,false); line.position.set(tile.position.x,.151,tile.position.z); line.userData={kind:'floor',id:f.id}; groups.floors.add(line); } }
 function rebuildEdges(){ groups.edges.clear(); state.edges.forEach(e=>{ const model=makeEdgeModel(e); groups.edges.add(model); }); }
@@ -554,12 +662,26 @@ function makeEdgeModel(e){
   g.traverse(o=>{ if(o.isMesh){ o.userData={...o.userData,kind:'edge',id:e.id}; o.castShadow=true; o.receiveShadow=true; }}); return g;
 }
 
-function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.142,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
+function rebuildItems(){ groups.items.clear(); state.items.forEach(it=>{ const def=itemDef(it.type); const g=def.build(it); addItemDetail(g,it.type); groundGroup(g); const [w,h]=[it.w,it.h]; const p=tileToWorld(it.x,it.z,w,h); g.position.set(p.x,.142,p.z); g.rotation.y=it.rot*Math.PI/2; g.userData={kind:'item',id:it.id}; g.traverse(o=>{ if(o.isMesh||o.isSprite){ o.userData={...o.userData,kind:'item',id:it.id}; if(o.isMesh){o.castShadow=true; o.receiveShadow=true;} }}); groups.items.add(g); }); }
 function rebuildStaff(){ groups.staff.clear(); let idx=0; Object.entries(state.staff).forEach(([id,count])=>{ for(let n=0;n<count;n++){ const s=makeStaffFigure(id); const x=buildOffsetX()+1+(idx%5); const z=buildOffsetZ()+1+Math.floor(idx/5); const p=tileToWorld(x,z); s.position.set(p.x,.16,p.z); groups.staff.add(s); idx++; }}); }
 
 // Item models: no built-in floor plates, just equipment/furniture.
 function makeReceptionDesk(){ const g=new THREE.Group(); g.add(box(1.85,.72,.58,mat.wood,true).positioned(0,.36,0)); g.add(box(1.72,.08,.12,mat.gold,true).positioned(0,.76,-.23)); g.add(box(.42,.28,.06,mat.glass,true).positioned(.48,.94,-.24)); g.add(box(.3,.18,.25,mat.metal,true).positioned(-.58,.84,-.13)); g.add(cylinder(.06,.06,.32,mat.gold).positioned(-.82,.94,.14)); return g; }
-function makeTurnstile(){ const g=new THREE.Group(); [-.38,.38].forEach(x=>{ g.add(cylinder(.055,.055,.78,mat.metal).positioned(x,.39,0)); g.add(box(.56,.055,.055,mat.metal,true).positioned(x,.68,0)); g.add(box(.08,.5,.22,mat.glass,true).positioned(x,.42,.28)); }); g.add(box(1.35,.07,.12,mat.dark,true).positioned(0,.08,0)); return g; }
+function makeTurnstile(){
+  const g=new THREE.Group();
+  g.add(box(1.92,.08,.92,mat.dark,true).positioned(0,.04,0));
+  g.add(box(1.85,.045,.12,mat.gold,true).positioned(0,.11,-.48));
+  [-.55,.55].forEach((x,i)=>{
+    const pedestal=box(.28,.92,.36,mat.metal,true).positioned(x,.46,-.08); g.add(pedestal);
+    const scanner=box(.18,.12,.16,mat.glass.clone(),true).positioned(x,.96,-.28); scanner.material.opacity=.72; scanner.userData.gateGlow=true; g.add(scanner);
+    const green=new THREE.Mesh(new THREE.SphereGeometry(.09,16,12),mat.gateGlow.clone()); green.position.set(x,1.08,-.31); green.userData.gateGlow=true; g.add(green);
+    const blade=box(.07,.62,.7,mat.doorGlass,true).positioned(x*.45,.44,.18); blade.userData.gateBlade=true; blade.userData.baseRot=0; blade.userData.side=i?1:-1; g.add(blade);
+    const rail=box(.5,.055,.08,mat.metal,true).positioned(x,.78,.42); g.add(rail);
+  });
+  const sign=box(1.45,.24,.06,mat.dark,true).positioned(0,1.34,-.5); g.add(sign);
+  const spr=makeTextSprite('ACCESS'); spr.position.set(0,1.36,-.56); spr.scale.set(1.1,.22,1); g.add(spr);
+  return g;
+}
 function makeCafeCounter(){ const g=new THREE.Group(); g.add(box(2.7,.74,.58,mat.pink,true).positioned(0,.37,0)); g.add(box(2.55,.12,.18,mat.dark,true).positioned(0,.78,-.18)); g.add(box(.48,.62,.06,mat.glass,true).positioned(-.85,.84,-.31)); for(let i=0;i<5;i++) g.add(cylinder(.07,.06,.22,i%2?mat.green:mat.gold).positioned(-.55+i*.28,.92,.05)); g.add(box(.7,.2,.24,mat.metal,true).positioned(.88,.93,-.12)); return g; }
 function makeSofa(){ const g=new THREE.Group(); g.add(box(1.78,.34,.68,mat.purple,true).positioned(0,.17,0)); g.add(box(1.82,.68,.17,mat.purple,true).positioned(0,.42,-.29)); [-.68,0,.68].forEach(x=>g.add(box(.48,.08,.5,mat.pink,true).positioned(x,.38,.06))); g.add(box(.12,.36,.68,mat.purple,true).positioned(-.96,.28,0)); g.add(box(.12,.36,.68,mat.purple,true).positioned(.96,.28,0)); return g; }
 function makeLockerBank(){ const g=new THREE.Group(); [-.62,-.05,.52].forEach((x,i)=>{ g.add(box(.5,1.28,.36,i%2?mat.gold:mat.metal,true).positioned(x,.64,0)); g.add(box(.04,.08,.025,mat.dark,true).positioned(x+.14,.75,-.19)); g.add(box(.35,.025,.03,mat.dark,true).positioned(x,.38,-.19)); }); return g; }
@@ -647,7 +769,7 @@ function makeSpeaker(){
   [-.2,.2].forEach(x=>g.add(cylinder(.035,.035,.16,mat.metal).positioned(x,.08,0)));
   return g;
 }
-function makePoolLane(){ const g=new THREE.Group(); const baseW=6, baseH=2; g.add(box(baseW-.05,.22,baseH-.05,mat.stone,true).positioned(0,.11,0)); g.add(box(baseW-.38,.12,baseH-.38,mat.water,false).positioned(0,.25,0)); for(let z=-.45; z<=.45; z+=.9) g.add(box(baseW-.65,.035,.035,mat.kerb,false).positioned(0,.34,z)); [-2.6,2.6].forEach(x=>g.add(cylinder(.035,.035,.55,mat.metal).rotated(0,0,Math.PI/2).positioned(x,.45,.78))); return g; }
+function makePoolLane(){ return makePoolBasin(6,2,{lanes:2,label:'LANE',steps:true,ladders:true}); }
 function makeJacuzzi(){ const g=new THREE.Group(); g.add(cylinder(.94,.98,.34,mat.stone).positioned(0,.17,0)); g.add(cylinder(.72,.75,.12,mat.water).positioned(0,.38,0)); for(let i=0;i<8;i++) g.add(cylinder(.035,.035,.02,mat.glass).positioned(Math.cos(i)*.5,.46,Math.sin(i)*.5)); return g; }
 function makeSaunaCabin(){
   const g=new THREE.Group();
@@ -699,6 +821,99 @@ function groundGroup(g){
   g.children.forEach(ch=>ch.position.y+=dy);
 }
 
+
+function makeMembershipKiosk(){
+  const g=new THREE.Group();
+  g.add(box(.62,1.15,.38,mat.dark,true).positioned(0,.575,0));
+  g.add(box(.42,.58,.04,mat.glass,true).positioned(0,.78,-.21));
+  g.add(box(.36,.07,.1,mat.gold,true).positioned(0,1.18,-.18));
+  g.add(cylinder(.05,.05,.22,mat.teal).positioned(.22,.42,-.2));
+  return g;
+}
+function makeLogoWall(){
+  const g=new THREE.Group();
+  g.add(box(1.82,1.34,.12,mat.dark,true).positioned(0,.67,0));
+  g.add(box(1.58,.08,.15,mat.gold,true).positioned(0,1.25,-.04));
+  g.add(box(.62,.42,.14,mat.teal,true).positioned(-.35,.76,-.08));
+  g.add(box(.42,.42,.14,mat.blue,true).positioned(.34,.76,-.08));
+  const spr=makeTextSprite('LEISURE CLUB'); spr.position.set(0,.28,-.12); spr.scale.set(1.35,.22,1); g.add(spr);
+  return g;
+}
+function makeCafeTable(){
+  const g=new THREE.Group();
+  g.add(cylinder(.42,.42,.08,mat.wood).positioned(0,.42,0));
+  g.add(cylinder(.055,.075,.78,mat.metal).positioned(0,.22,0));
+  [[-.65,0],[.65,0],[0,-.65],[0,.65]].forEach(([x,z],i)=>{ g.add(box(.42,.12,.42,i%2?mat.pink:mat.teal,true).positioned(x,.26,z)); g.add(box(.42,.45,.08,i%2?mat.pink:mat.teal,true).positioned(x,.52,z+(z?Math.sign(z)*.2:0))); });
+  g.add(cylinder(.055,.05,.2,mat.gold).positioned(.14,.52,.08));
+  return g;
+}
+function makeBaristaStation(){
+  const g=new THREE.Group();
+  g.add(box(.72,.55,.52,mat.metal,true).positioned(0,.275,0));
+  g.add(box(.58,.12,.22,mat.dark,true).positioned(0,.61,-.12));
+  g.add(cylinder(.055,.055,.28,mat.metal).positioned(-.18,.8,-.08));
+  g.add(cylinder(.055,.055,.28,mat.metal).positioned(.18,.8,-.08));
+  g.add(box(.38,.16,.1,mat.gold,true).positioned(0,.76,.2));
+  for(let i=0;i<3;i++) g.add(cylinder(.055,.045,.13,mat.wall).positioned(-.25+i*.25,.67,.28));
+  return g;
+}
+function makeRetailWall(){
+  const g=new THREE.Group();
+  g.add(box(1.75,1.35,.12,mat.wood,true).positioned(0,.675,0));
+  for(let r=0;r<3;r++) g.add(box(1.5,.055,.16,mat.metal,true).positioned(0,.34+r*.35,-.12));
+  [mat.teal,mat.pink,mat.gold,mat.blue,mat.purple,mat.green].forEach((m,i)=>g.add(box(.24,.18,.08,m,true).positioned(-.58+(i%3)*.58,.43+Math.floor(i/3)*.35,-.2)));
+  return g;
+}
+function makePoolBasin(w,d,opt={}){
+  const g=new THREE.Group();
+  const rim=mat.stone, tileMat=new THREE.MeshStandardMaterial({color:0x75d8ef, roughness:.28});
+  g.add(box(w,.24,d,rim,true).positioned(0,.12,0));
+  g.add(box(w-.42,.18,d-.42,tileMat,true).positioned(0,.22,0));
+  g.add(box(w-.72,.1,d-.72,mat.water,false).positioned(0,.37,0));
+  g.add(box(w-.75,.035,.035,mat.kerb,false).positioned(0,.45,0));
+  const lanes=opt.lanes||1;
+  if(lanes>1){ for(let i=1;i<lanes;i++){ const z=-d/2+.36+i*(d-.72)/lanes; g.add(box(w-.95,.035,.035,mat.gold,false).positioned(0,.47,z)); } }
+  if(opt.steps){ for(let i=0;i<3;i++) g.add(box(.8-i*.14,.045,.18,mat.wall,true).positioned(-w/2+.55,.33+i*.04,d/2-.34-i*.18)); }
+  if(opt.ladders){ [-w/2+.45,w/2-.45].forEach(x=>{ g.add(cylinder(.028,.028,.62,mat.metal).rotated(0,0,Math.PI/2).positioned(x,.62,d/2-.25)); g.add(cylinder(.028,.028,.48,mat.metal).positioned(x-.13,.48,d/2-.25)); g.add(cylinder(.028,.028,.48,mat.metal).positioned(x+.13,.48,d/2-.25)); }); }
+  for(let i=0;i<Math.max(4,Math.floor(w));i++){ const ripple=box(.38,.012,.018,mat.glass,false).positioned(-w/2+.6+i*(w-1.2)/(Math.max(1,Math.floor(w)-1)),.49,Math.sin(i)*.22); ripple.userData.waterRipple=true; g.add(ripple); }
+  return g;
+}
+function makeSmallPool(){ return makePoolBasin(3,2,{lanes:1,steps:true,ladders:true}); }
+function makeFamilyPool(){ return makePoolBasin(4,3,{lanes:2,steps:true,ladders:true}); }
+function makeLargeLapPool(){ return makePoolBasin(8,3,{lanes:3,steps:true,ladders:true}); }
+function makeHydroPool(){
+  const g=new THREE.Group();
+  g.add(cylinder(1.18,1.25,.3,mat.stone).positioned(0,.15,0));
+  g.add(cylinder(.95,.95,.12,mat.water).positioned(0,.36,0));
+  for(let i=0;i<10;i++){ const jet=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),mat.glass); jet.position.set(Math.cos(i*.63)*.62,.48,Math.sin(i*.63)*.62); jet.userData.waterRipple=true; g.add(jet); }
+  g.add(box(.72,.08,.2,mat.wall,true).positioned(0,.34,1.04));
+  return g;
+}
+function makeCourtBase(w,d,color=0x2d9a6a){
+  const g=new THREE.Group(); const surf=new THREE.MeshStandardMaterial({color, roughness:.85});
+  g.add(box(w,.08,d,surf,false).positioned(0,.04,0));
+  g.add(box(w-.5,.012,.045,mat.wall,false).positioned(0,.105,0));
+  [-d/2+.25,d/2-.25].forEach(z=>g.add(box(w-.45,.012,.04,mat.wall,false).positioned(0,.11,z)));
+  [-w/2+.25,w/2-.25].forEach(x=>g.add(box(.04,.012,d-.45,mat.wall,false).positioned(x,.11,0)));
+  return g;
+}
+function makePadelCourt(){
+  const g=makeCourtBase(6,4,0x3c936d);
+  g.add(box(6.1,1.25,.06,mat.glass,true).positioned(0,.7,-2.03)); g.add(box(6.1,1.25,.06,mat.glass,true).positioned(0,.7,2.03));
+  g.add(box(.06,1.25,4.1,mat.glass,true).positioned(-3.03,.7,0)); g.add(box(.06,1.25,4.1,mat.glass,true).positioned(3.03,.7,0));
+  g.add(box(6,.045,.08,mat.dark,true).positioned(0,.58,0));
+  return g;
+}
+function makeTennisCourt(){ const g=makeCourtBase(7,4,0x3e8cc8); g.add(box(7,.045,.08,mat.dark,true).positioned(0,.5,0)); for(let i=0;i<7;i++) g.add(cylinder(.025,.025,.85,mat.metal).positioned(-3+i, .45, 0)); return g; }
+function makeSunBedPair(){ const g=new THREE.Group(); [-.42,.42].forEach(x=>{ g.add(box(.62,.12,1.1,mat.wall,true).rotated(-.18,0,0).positioned(x,.16,0)); g.add(box(.62,.16,.28,mat.teal,true).positioned(x,.28,-.42)); g.add(cylinder(.035,.035,.5,mat.metal).positioned(x-.22,.09,.36)); g.add(cylinder(.035,.035,.5,mat.metal).positioned(x+.22,.09,.36)); }); return g; }
+function makeParasolSet(){ const g=makeCafeTable(); g.add(cylinder(.04,.05,1.45,mat.wood).positioned(0,.92,0)); const shade=new THREE.Mesh(new THREE.ConeGeometry(.85,.35,16),mat.gold); shade.position.set(0,1.65,0); shade.castShadow=true; g.add(shade); return g; }
+function makeOutdoorHotTub(){ const g=makeHydroPool(); g.scale.set(.82,.82,.82); g.add(box(1.8,.18,.28,mat.wood,true).positioned(0,.32,-1.0)); return g; }
+function makeGardenYogaDeck(){ const g=new THREE.Group(); g.add(box(2.8,.1,2.8,mat.wood,true).positioned(0,.05,0)); for(let i=0;i<5;i++) g.add(box(.58,.025,.9,i%2?mat.purple:mat.teal,false).positioned(-.95+(i%3)*.95,.13,-.45+Math.floor(i/3)*.95)); g.add(box(2.5,.04,.04,mat.gold,true).positioned(0,.18,1.25)); return g; }
+function makeOutdoorLounge(){ const g=new THREE.Group(); g.add(box(2.45,.18,1.35,mat.wood,true).positioned(0,.09,0)); [-.75,0,.75].forEach(x=>g.add(box(.65,.32,.72,mat.purple,true).positioned(x,.32,0))); g.add(box(2.55,.54,.16,mat.purple,true).positioned(0,.5,-.42)); g.add(box(.55,.2,.55,mat.dark,true).positioned(0,.28,.62)); return g; }
+function makeFirePit(){ const g=new THREE.Group(); g.add(cylinder(.52,.62,.22,mat.stone).positioned(0,.11,0)); g.add(cylinder(.32,.35,.08,mat.dark).positioned(0,.28,0)); for(let i=0;i<6;i++) g.add(box(.6,.18,.28,mat.wood,true).rotated(0,i*Math.PI/3,0).positioned(Math.cos(i*Math.PI/3)*1.0,.18,Math.sin(i*Math.PI/3)*1.0)); const flame=new THREE.Mesh(new THREE.ConeGeometry(.18,.45,8),mat.orange); flame.position.y=.55; g.add(flame); return g; }
+function makeBikeRack(){ const g=new THREE.Group(); g.add(box(1.6,.06,.1,mat.metal,true).positioned(0,.08,0)); for(let i=0;i<4;i++) g.add(cylinder(.16,.16,.035,mat.metal).rotated(Math.PI/2,0,0).positioned(-.6+i*.4,.24,0)); return g; }
+function makeOutdoorShower(){ const g=new THREE.Group(); g.add(box(.62,.08,.62,mat.stone,true).positioned(0,.04,0)); g.add(cylinder(.035,.035,1.38,mat.metal).positioned(0,.69,0)); g.add(cylinder(.16,.16,.04,mat.metal).positioned(.16,1.32,0)); for(let i=0;i<6;i++) g.add(cylinder(.01,.01,.34,mat.water).positioned(.08+i*.025,1.05,0)); return g; }
+
 function makeStaffFigure(id){ const g=new THREE.Group(); const color={receptionist:mat.teal, cleaner:mat.gold, instructor:mat.orange, lifeguard:mat.red, therapist:mat.purple}[id]||mat.blue; g.add(cylinder(.16,.18,.5,color).positioned(0,.45,0)); const head=new THREE.Mesh(new THREE.SphereGeometry(.15,18,18),mat.wall); head.position.y=.82; head.castShadow=true; g.add(head); const label=makeTextSprite(staffDefs[id].name.split(' ')[0]); label.position.set(0,1.18,0); label.scale.set(.8,.22,1); g.add(label); return g; }
 
 THREE.Object3D.prototype.positioned = function(x,y,z){ this.position.set(x,y,z); return this; };
@@ -727,11 +942,38 @@ function nearestTargetCell(item){ const candidates=[]; for(let x=item.x-1;x<=ite
 function entranceCell(){ const doors=state.edges.filter(e=>edgeDef(e.type)?.kind==='door'); if(doors.length){ const d=doors[0]; const span=edgeSpan(d.type); const inside = d.dir==='h' ? {x:clamp(d.x+Math.floor(span/2),0,state.maxW-1),z:clamp(d.z,0,state.maxH-1)} : {x:clamp(d.x,0,state.maxW-1),z:clamp(d.z+Math.floor(span/2),0,state.maxH-1)}; if(isUnlockedCell(inside.x,inside.z)) return inside; }
   return {x:buildOffsetX()+1,z:buildOffsetZ()+1}; }
 
+function accessGates(){ return state.items.filter(i=>i.type==='turnstile'); }
+function nearestGateFor(start){
+  const gates=accessGates();
+  let best=null, bestPath=null, bestLen=Infinity;
+  for(const gate of gates){
+    const gc=nearestTargetCell(gate);
+    const path=findPath(start,gc);
+    if(path && path.length<bestLen){ best=gate; bestPath=path; bestLen=path.length; }
+  }
+  return best ? {gate:best,path:bestPath} : null;
+}
+function gateCenterCell(gate){ return nearestTargetCell(gate); }
 function spawnVisitor(){
-  const usable=state.items.filter(i=>itemDef(i.type).capacity>0); if(!usable.length) return; if(state.visitors.length>=Math.min(90, Math.max(8, Math.floor(state.members/2)))) return;
-  const target=usable[Math.floor(Math.random()*usable.length)]; const start=entranceCell(); const goal=nearestTargetCell(target); const path=findPath(start,goal);
-  if(!path){ state.routeScore=Math.max(0,state.routeScore-6); return; }
-  const mesh=makeVisitor(); const wp=tileToWorld(start.x,start.z); mesh.position.set(wp.x,.155,wp.z); groups.people.add(mesh); state.visitors.push({id:nextVisitorId++,mesh,targetId:target.id,path,pathIndex:0,speed:1.65+Math.random()*.7,spend:0,leaving:false,using:false,useTime:2.6+Math.random()*2.0});
+  const usable=state.items.filter(i=>itemDef(i.type).capacity>0 && i.type!=='turnstile');
+  if(!usable.length) return;
+  if(!accessGates().length){ state.routeScore=Math.max(0,state.routeScore-8); return; }
+  if(state.visitors.length>=Math.min(90, Math.max(8, Math.floor(state.members/2)))) return;
+  const start=entranceCell();
+  const gateChoice=nearestGateFor(start);
+  if(!gateChoice){ state.routeScore=Math.max(0,state.routeScore-8); return; }
+  const target=usable[Math.floor(Math.random()*usable.length)];
+  const gateCell=gateCenterCell(gateChoice.gate);
+  const goal=nearestTargetCell(target);
+  const afterGate=findPath(gateCell,goal);
+  if(!afterGate){ state.routeScore=Math.max(0,state.routeScore-6); return; }
+  const mesh=makeVisitor();
+  const wp=tileToWorld(start.x,start.z); mesh.position.set(wp.x,.155,wp.z); groups.people.add(mesh);
+  state.visitors.push({
+    id:nextVisitorId++, mesh, targetId:target.id, finalTargetId:target.id, gateId:gateChoice.gate.id,
+    stage:'toGate', path:gateChoice.path, pathIndex:0, speed:1.65+Math.random()*.7,
+    spend:0, leaving:false, using:false, useTime:2.6+Math.random()*2.0, gateUse:0, gateQueued:false
+  });
 }
 function makeVisitor(){
   const g=new THREE.Group();
@@ -748,19 +990,70 @@ function updateVisitors(dt){
   for(const v of [...state.visitors]){
     if(v.using){ updateVisitorUse(v,dt); continue; }
     const targetCell=v.path[v.pathIndex];
-    if(!targetCell){ if(v.leaving) removeVisitor(v); else v.using=true; continue; }
-    const dest=tileToWorld(targetCell.x,targetCell.z); const dir=new THREE.Vector3(dest.x-v.mesh.position.x,0,dest.z-v.mesh.position.z); const dist=dir.length();
+    if(!targetCell){
+      if(v.stage==='toGate'){ processGateQueue(v,dt); continue; }
+      if(v.stage==='leavingViaGate'){ processExitGate(v,dt); continue; }
+      if(v.leaving) removeVisitor(v); else v.using=true;
+      continue;
+    }
+    const dest=tileToWorld(targetCell.x,targetCell.z);
+    const dir=new THREE.Vector3(dest.x-v.mesh.position.x,0,dest.z-v.mesh.position.z);
+    const dist=dir.length();
     if(dist>.08){
       resetVisitorPose(v);
       dir.normalize(); v.mesh.position.addScaledVector(dir,v.speed*dt); v.mesh.rotation.y=Math.atan2(dir.x,dir.z); v.mesh.position.y=.155+Math.sin(performance.now()*.008+v.id)*.025;
     } else {
       v.pathIndex++;
       if(v.pathIndex>=v.path.length){
+        if(v.stage==='toGate'){ processGateQueue(v,dt); continue; }
+        if(v.stage==='leavingViaGate'){ processExitGate(v,dt); continue; }
         if(v.leaving){ removeVisitor(v); continue; }
         v.using=true; v.spend=0; v.useTime=2.6+Math.random()*2.0;
       }
     }
   }
+}
+function processGateQueue(v,dt){
+  const gate=state.items.find(i=>i.id===v.gateId);
+  if(!gate){ removeVisitor(v); return; }
+  const queueAhead=state.visitors.filter(o=>o!==v && o.stage==='toGate' && o.gateId===v.gateId && !o.using && o.pathIndex>=o.path.length).sort((a,b)=>a.id-b.id);
+  const firstWaiting=!queueAhead.length || queueAhead[0].id>v.id;
+  if(activeGateVisitor && activeGateVisitor!==v.id || !firstWaiting){
+    poseGateWaiting(v,gate,queueAhead.length+.15); return;
+  }
+  activeGateVisitor=v.id;
+  v.gateUse+=dt;
+  triggerGate(gate.id);
+  poseGateScanning(v,gate);
+  if(v.gateUse<.85) return;
+  activeGateVisitor=null;
+  v.stage='toTarget'; v.gateUse=0;
+  const gateCell=gateCenterCell(gate);
+  const target=state.items.find(i=>i.id===v.finalTargetId);
+  if(!target){ removeVisitor(v); return; }
+  v.path=findPath(gateCell, nearestTargetCell(target)) || [gateCell];
+  v.pathIndex=0; v.targetId=target.id;
+}
+function processExitGate(v,dt){
+  const gate=state.items.find(i=>i.id===v.gateId);
+  if(!gate){ removeVisitor(v); return; }
+  triggerGate(gate.id);
+  poseGateScanning(v,gate);
+  v.gateUse+=dt;
+  if(v.gateUse<.45) return;
+  v.leaving=true; v.stage='leaving';
+  const gateCell=gateCenterCell(gate); const exit=entranceCell();
+  v.path=findPath(gateCell, exit)||[gateCell,exit]; v.pathIndex=0; v.gateUse=0;
+}
+function poseGateWaiting(v,gate,offset=0){
+  const p=itemWorldPoint(gate,0,0.95+Math.min(1.6,offset*.35));
+  v.mesh.position.x += (p.x-v.mesh.position.x)*.12; v.mesh.position.z += (p.z-v.mesh.position.z)*.12; v.mesh.lookAt(itemWorldPoint(gate,0,0).x,v.mesh.position.y,itemWorldPoint(gate,0,0).z);
+  resetVisitorPose(v);
+}
+function poseGateScanning(v,gate){
+  setVisitorOnItem(v,gate,0,.42,0,.155);
+  const p=v.mesh.userData.parts; if(!p) return;
+  p.armR.rotation.set(-1.1,0,-.55); p.armL.rotation.set(-.35,0,.35);
 }
 function updateVisitorUse(v,dt){
   const target=state.items.find(i=>i.id===v.targetId);
@@ -769,11 +1062,17 @@ function updateVisitorUse(v,dt){
   poseVisitorUsing(v,target,def);
   v.spend+=dt;
   if(v.spend<v.useTime) return;
-  let mult=.8+state.rating/100; if(['freeweights','cardio','studio'].includes(def.cat)) mult+=state.staff.instructor*.05; if(def.cat==='poolspa') mult+=state.staff.lifeguard*.04+state.staff.therapist*.05;
+  let mult=.8+state.rating/100; if(['freeweights','cardio','studio'].includes(def.cat)) mult+=state.staff.instructor*.05; if(def.cat==='poolspa'||def.cat==='outdoor') mult+=state.staff.lifeguard*.04+state.staff.therapist*.05;
   state.cash+=Math.round(def.income*mult); target.visits++; target.condition=clamp(target.condition-(.35+Math.random()*.35)/(1+state.staff.cleaner*.25),35,100);
   v.using=false; resetVisitorPose(v);
-  if(Math.random()<.42){ v.leaving=true; const start=entranceCell(); const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z; v.path=findPath(cur,start)||[cur,start]; v.pathIndex=0; }
-  else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z; v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
+  if(Math.random()<.42){
+    const gate=accessGates()[0];
+    if(!gate){ removeVisitor(v); return; }
+    v.leaving=false; v.stage='leavingViaGate'; v.gateId=gate.id; v.gateUse=0;
+    const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z;
+    v.path=findPath(cur,gateCenterCell(gate))||[cur]; v.pathIndex=0;
+  }
+  else { const choices=state.items.filter(i=>itemDef(i.type).capacity>0 && i.type!=='turnstile'); const next=choices[Math.floor(Math.random()*choices.length)]; v.targetId=next.id; v.finalTargetId=next.id; v.stage='toTarget'; const cur=nearestTargetCell(target); const cp=tileToWorld(cur.x,cur.z); v.mesh.position.x=cp.x; v.mesh.position.z=cp.z; v.path=findPath(cur,nearestTargetCell(next))||[cur]; v.pathIndex=0; v.spend=0; }
 }
 function resetVisitorPose(v){
   const p=v.mesh.userData.parts; if(!p) return; const t=performance.now()*.006+v.id;
@@ -846,11 +1145,11 @@ function poseVisitorUsing(v,item,def){
     setVisitorOnItem(v,item,0,.08,0,.25); v.mesh.scale.set(1.08,.42,1.08); p.body.rotation.x=Math.PI/2;
     p.armL.rotation.set(-.7+Math.sin(t*1.7)*.18,0,.38); p.armR.rotation.set(-.7+Math.sin(t*1.7)*.18,0,-.38); p.legL.rotation.x=.35; p.legR.rotation.x=.35; return;
   }
-  if(item.type==='poolLane'){
+  if(['poolLane','smallPool','familyPool','largeLapPool'].includes(item.type)){
     setVisitorOnItem(v,item,0,0,0,.31); v.mesh.scale.set(1.25,.48,1.25); p.body.rotation.x=Math.PI/2;
     p.armL.rotation.x=Math.sin(t*3)*1.1; p.armR.rotation.x=-Math.sin(t*3)*1.1; p.legL.rotation.x=-Math.sin(t*3)*.55; p.legR.rotation.x=Math.sin(t*3)*.55; return;
   }
-  if(item.type==='jacuzzi' || item.type==='saunaCabin' || item.type==='steamRoom'){
+  if(item.type==='jacuzzi' || item.type==='saunaCabin' || item.type==='steamRoom' || item.type==='hydroPool' || item.type==='outdoorHotTub'){
     setVisitorOnItem(v,item,0,.15,0,.18); v.mesh.scale.set(1,.72,1); p.body.rotation.x=.25; p.armL.rotation.set(0,0,1); p.armR.rotation.set(0,0,-1); p.legL.rotation.x=.65; p.legR.rotation.x=.65; return;
   }
   if(item.type==='showerPod'){
@@ -858,6 +1157,11 @@ function poseVisitorUsing(v,item,def){
   }
   if(item.type==='treatmentBed'){
     setVisitorOnItem(v,item,0,.05,0,.25); v.mesh.scale.set(1.05,.42,1.05); p.body.rotation.x=Math.PI/2; p.armL.rotation.set(0,0,.9); p.armR.rotation.set(0,0,-.9); return;
+  }
+  if(def.cat==='outdoor') {
+    if(['padelCourt','tennisCourt'].includes(item.type)){ setVisitorOnItem(v,item,Math.sin(t*2)*.8,0,0,.17); p.armL.rotation.x=Math.sin(t*2.3)*.9; p.armR.rotation.x=-Math.sin(t*2.3)*.9; p.legL.rotation.x=-Math.sin(t*2)*.55; p.legR.rotation.x=Math.sin(t*2)*.55; return; }
+    if(['sunBedPair'].includes(item.type)){ setVisitorOnItem(v,item,.35,0,0,.24); v.mesh.scale.set(1.05,.48,1.05); p.body.rotation.x=Math.PI/2; return; }
+    setVisitorOnItem(v,item,0,.25,0,.18); p.body.rotation.x=.18; p.armL.rotation.set(-.35,0,.8); p.armR.rotation.set(-.35,0,-.8); return;
   }
   if(def.cat==='clubhouse'){
     const itemCenter=tileToWorld(item.x,item.z,item.w,item.h); v.mesh.lookAt(itemCenter.x,v.mesh.position.y,itemCenter.z); v.mesh.scale.set(1,.9,1); p.armL.rotation.set(-.55,0,.55); p.armR.rotation.set(-.45,0,-.55); return;
@@ -875,9 +1179,9 @@ function updateSimulation(dt){
   const cleanerBoost=state.staff.cleaner*8;
   state.cleanliness=clamp(condition - state.visitors.length*.18 + cleanerBoost,20,100);
   state.luxury=clamp(appeal*1.35 + variety*1.2 + state.staff.therapist*4,0,100);
-  if(performance.now()-lastRouteCheck>2500){ state.routeScore=calculateRouteScore(); lastRouteCheck=performance.now(); }
+  if(performance.now()-lastRouteCheck>2500){ state.routeScore=calculateRouteScore(); lastRouteCheck=performance.now(); rebuildDebugOverlay(); }
   state.rating=Math.round(clamp(32 + state.cleanliness*.22 + state.luxury*.36 + state.routeScore*.16 + state.staff.receptionist*3 - Math.max(0,state.members-cap)*.28, 12, 99));
-  const targetMembers = hasItem('receptionDesk') ? Math.floor(6 + cap*2.6 + state.rating*.7 + state.reputation*2.5 + state.staff.receptionist*8) : Math.floor(cap*.2);
+  const targetMembers = (hasItem('receptionDesk') && hasItem('turnstile')) ? Math.floor(6 + cap*2.6 + state.rating*.7 + state.reputation*2.5 + state.staff.receptionist*8) : Math.floor(cap*.18);
   state.members += Math.sign(targetMembers-state.members)*Math.min(3,Math.abs(targetMembers-state.members));
   state.reputation=Math.max(0,Math.floor((state.rating-42)/6 + state.items.length*.28 + state.expansions*2));
   const wage=Object.entries(state.staff).reduce((s,[id,c])=>s+c*staffDefs[id].wage,0);
@@ -886,21 +1190,78 @@ function updateSimulation(dt){
   if(Math.random()<clamp(state.members/125,.08,.85)) spawnVisitor();
   updateUi(false);
 }
-function calculateRouteScore(){ const usable=state.items.filter(i=>itemDef(i.type).capacity>0).slice(0,10); if(!usable.length) return 100; const start=entranceCell(); let reachable=0; for(const it of usable){ if(findPath(start,nearestTargetCell(it))) reachable++; } return Math.round((reachable/usable.length)*100); }
+function calculateRouteScore(){ const gates=accessGates(); const usable=state.items.filter(i=>itemDef(i.type).capacity>0 && i.type!=='turnstile').slice(0,14); if(!gates.length) return usable.length?15:65; if(!usable.length) return 80; const start=entranceCell(); const gate=nearestGateFor(start); if(!gate) return 20; const gateCell=gateCenterCell(gate.gate); let reachable=0; for(const it of usable){ if(findPath(gateCell,nearestTargetCell(it))) reachable++; } return Math.round((reachable/usable.length)*100); }
 
+
+function rebuildDebugOverlay(){
+  groups.debug.clear();
+  if(!state.showPaths && !state.showBlocked) return;
+  if(state.showBlocked){
+    const walk=buildPassability();
+    for(let x=0;x<state.maxW;x++) for(let z=0;z<state.maxH;z++){
+      if(!isUnlockedCell(x,z)) continue;
+      if(!walk[x][z]){ const p=tileToWorld(x,z); const q=box(.86,.035,.86,mat.debugBlocked,false); q.position.set(p.x,.24,p.z); groups.debug.add(q); }
+    }
+  }
+  if(state.showPaths){
+    const start=entranceCell();
+    const gate=accessGates()[0];
+    if(gate){ const gp=gateCenterCell(gate); drawDebugPath(findPath(start,gp),0x79ffd6); }
+    const routeStart=gate?gateCenterCell(gate):start;
+    state.items.filter(i=>itemDef(i.type).capacity>0 && i.type!=='turnstile').slice(0,18).forEach(it=>drawDebugPath(findPath(routeStart,nearestTargetCell(it)), isItemReachable(it)?0x79ffd6:0xff667a));
+  }
+}
+function drawDebugPath(path,color=0x79ffd6){
+  if(!path || path.length<2) return;
+  const matLine=new THREE.LineBasicMaterial({color, transparent:true, opacity:.64});
+  const pts=path.map(c=>{ const p=tileToWorld(c.x,c.z); return new THREE.Vector3(p.x,.34,p.z); });
+  groups.debug.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),matLine));
+  path.forEach((c,i)=>{ if(i%2) return; const p=tileToWorld(c.x,c.z); const m=box(.18,.04,.18,mat.debugPath,false); m.position.set(p.x,.34,p.z); groups.debug.add(m); });
+}
 function updateUi(full=false){
   ui.cash.textContent=money(state.cash); ui.members.textContent=String(Math.round(state.members)); ui.rating.textContent=`${state.rating}%`; ui.rep.textContent=String(state.reputation); ui.day.textContent=String(state.day); ui.clock.textContent=`${String(Math.floor(state.minute/60)).padStart(2,'0')}:${String(Math.floor(state.minute%60)).padStart(2,'0')}`;
   ui.cleanText.textContent=`${Math.round(state.cleanliness)}%`; ui.cleanBar.style.width=`${state.cleanliness}%`; ui.luxuryText.textContent=`${Math.round(state.luxury)}%`; ui.luxuryBar.style.width=`${state.luxury}%`; ui.routeText.textContent=state.routeScore>75?'Good':state.routeScore>35?'Patchy':'Blocked'; ui.routeBar.style.width=`${state.routeScore}%`;
   const def=selectedDef(); ui.selectedHint.textContent=state.bulldoze?'Bulldoze mode':def?`${def.name} · ${state.mode==='edge'?'edge snap':'R rotates'} · Q deselect`:'Nothing selected'; ui.bulldozeBtn.classList.toggle('active-tool',state.bulldoze);
   const cost=6500+state.expansions*4500; ui.expandBtn.textContent=`Expand ${money(cost)}`;
+  ui.pathToggleBtn.classList.toggle('active-tool',state.showPaths); ui.blockedToggleBtn.classList.toggle('active-tool',state.showBlocked);
   refreshBuildButtons(); renderObjectives(); Object.keys(staffDefs).forEach(id=>{ const el=document.getElementById(`staff-${id}`); if(el) el.textContent=String(state.staff[id]); });
-  if(!selectedThing || full){ ui.inspectTitle.textContent=def?`${def.emoji} ${def.name}`:'Blank Plot'; ui.inspectBody.textContent=def?`${def.desc||''} ${state.mode==='edge'?'This will place on grid edges, not tile centres.':''}`:'Use floors first, draw walls on edges, add doors/windows, then place individual equipment to design your own areas.'; }
+  if(selectedThing && full){ inspectThing(selectedThing.kind, selectedThing.id); return; }
+  if(!selectedThing){
+    ui.inspectTitle.textContent=def?`${def.emoji} ${def.name}`:'Blank Plot';
+    ui.inspectBody.textContent=def?`${def.desc||''} ${state.mode==='edge'?'This will place on grid edges, not tile centres.':''}`:'Use floors first, draw walls on edges, add access gates near the entrance, then debug routes with Paths/Blocked.';
+    renderInspectorMeta(def?[['Cost',money(def.cost||0)],['Mode',state.mode],['Selected',def.name],['Route tool',state.showPaths?'On':'Off']]:[['Members','Need access gates'],['Camera','WASD + drag'],['Debug','Use Paths/Blocked'],['Entrance','Road side']]);
+  }
 }
 function renderObjectives(){ ui.objectives.innerHTML=objectives.map(o=>`<li class="${o.done()?'done':''}">${o.done()?'✓':'○'} ${o.text}</li>`).join(''); }
 function toast(msg){ ui.toast.textContent=msg; ui.toast.classList.remove('hidden'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>ui.toast.classList.add('hidden'),3200); }
 function saveGame(){ const data={...state, visitors:[]}; localStorage.setItem(SAVE_KEY,JSON.stringify(data)); toast('Game saved in this browser.'); }
 function loadGame(){ const raw=localStorage.getItem(SAVE_KEY); if(!raw){ toast('No save found yet.'); return; } const data=JSON.parse(raw); Object.assign(state,data,{visitors:[]}); nextId=Math.max(1,...state.floors.map(f=>f.id+1),...state.edges.map(e=>e.id+1),...state.items.map(i=>i.id+1)); groups.people.clear(); rebuildPlot(); rebuildAll(); updateUi(true); toast('Save loaded.'); }
 
+
+
+function triggerGate(id){
+  const gate=state.items.find(i=>i.id===id); if(!gate) return;
+  gate.gateOpen=1; gate.gateGlow=1;
+}
+function animateAccessGates(dt){
+  for(const it of state.items.filter(i=>i.type==='turnstile')){
+    it.gateOpen=clamp((it.gateOpen||0)-dt*1.65,0,1);
+    it.gateGlow=clamp((it.gateGlow||0)-dt*1.3,0,1);
+  }
+  groups.items.traverse(o=>{
+    if(!o.userData?.gateBlade && !o.userData?.gateGlow) return;
+    const it=state.items.find(i=>i.id===o.userData.id); if(!it) return;
+    if(o.userData.gateBlade){
+      const target=(it.gateOpen||0)*1.05*(o.userData.side||1);
+      o.rotation.y += (target-o.rotation.y)*(1-Math.pow(.001,dt));
+    }
+    if(o.userData.gateGlow){
+      if(o.material && 'opacity' in o.material) o.material.opacity = .28 + (it.gateGlow||0)*.72;
+      const pulse=1+(it.gateGlow||0)*.45*Math.sin(performance.now()*.025);
+      o.scale.setScalar(pulse);
+    }
+  });
+}
 
 function animateDoors(dt){
   const doorEdges=state.edges.filter(e=>edgeDef(e.type)?.kind==='door');
@@ -941,5 +1302,5 @@ function updateCameraMovement(dt){
   const dz=clamp(controls.target.z,minZ,maxZ)-controls.target.z;
   if(dx||dz){ camera.position.x+=dx; controls.target.x+=dx; camera.position.z+=dz; controls.target.z+=dz; }
 }
-function animate(){ const dt=Math.min(clock.getDelta(),.05); updateCameraMovement(dt); controls.update(); updateVisitors(dt); animateDoors(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
-function animateWater(){ const t=performance.now()*.001; groups.items.traverse(o=>{ if(o.material===mat.water) o.position.y += Math.sin(t*2)*.0008; }); }
+function animate(){ const dt=Math.min(clock.getDelta(),.05); updateCameraMovement(dt); controls.update(); updateTraffic(dt); updateVisitors(dt); animateDoors(dt); animateAccessGates(dt); updateSimulation(dt); animateWater(); renderer.render(scene,camera); requestAnimationFrame(animate); }
+function animateWater(){ const t=performance.now()*.001; groups.items.traverse(o=>{ if(o.material===mat.water){ if(o.userData.baseY===undefined) o.userData.baseY=o.position.y; o.position.y=o.userData.baseY+Math.sin(t*2+o.position.x)*.018; } if(o.userData?.waterRipple){ if(o.userData.baseY===undefined) o.userData.baseY=o.position.y; o.position.y=o.userData.baseY+Math.sin(t*3+o.position.x*2)*.018; o.rotation.y+=.01; } }); }
