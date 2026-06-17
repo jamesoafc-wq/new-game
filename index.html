@@ -10,12 +10,12 @@
       <canvas id="game"></canvas>
       <div id="vignette"></div>
 
-      <aside id="hud" class="panel glass">
+      <aside id="leftPanel" class="panel glass">
         <div class="brand">
           <div class="brand-icon">LC</div>
           <div>
             <h1>Leisure Club Tycoon</h1>
-            <p>Build rooms, hire staff and grow a premium wellness club.</p>
+            <p>Blank-canvas 3D leisure club builder.</p>
           </div>
         </div>
 
@@ -32,52 +32,57 @@
 
         <section>
           <div class="section-title">
-            <h2>Build / Hire</h2>
-            <span id="selectedHint">Inspect mode</span>
+            <h2>Build Mode</h2>
+            <span id="selectedHint">Nothing selected</span>
           </div>
+          <div id="categoryTabs" class="tabs"></div>
           <div id="buildMenu" class="build-menu"></div>
         </section>
 
         <section class="actions">
           <button id="rotateBtn" class="secondary">Rotate</button>
-          <button id="cancelBtn" class="secondary">Deselect</button>
-          <button id="deleteBtn" class="secondary">Bulldoze</button>
-          <button id="expandBtn">Expand</button>
+          <button id="deselectBtn" class="secondary">Deselect</button>
+          <button id="bulldozeBtn" class="secondary">Bulldoze</button>
         </section>
 
         <section class="actions compact">
+          <button id="expandBtn">Expand Plot</button>
           <button id="saveBtn" class="secondary">Save</button>
           <button id="loadBtn" class="secondary">Load</button>
           <button id="resetBtn" class="danger">Reset</button>
         </section>
       </aside>
 
-      <aside id="inspector" class="panel glass">
-        <h2 id="inspectTitle">Welcome</h2>
-        <p id="inspectBody">
-          Build rooms with walls, glass, doors and floor tiles. Then place facilities,
-          hire staff and grow your leisure club rating.
-        </p>
+      <aside id="rightPanel" class="panel glass">
+        <h2 id="inspectTitle">Blank Plot</h2>
+        <p id="inspectBody">Lay floors, draw walls on grid edges, add doors/windows, then place individual gym, pool, spa and clubhouse items.</p>
 
         <div class="progress">
-          <div class="progress-label">
-            <span>Cleanliness</span>
-            <strong id="cleanText">100%</strong>
-          </div>
+          <div class="progress-label"><span>Cleanliness</span><strong id="cleanText">100%</strong></div>
           <div class="bar"><i id="cleanBar"></i></div>
         </div>
-
         <div class="progress">
-          <div class="progress-label">
-            <span>Luxury Feel</span>
-            <strong id="luxuryText">0%</strong>
-          </div>
+          <div class="progress-label"><span>Luxury Feel</span><strong id="luxuryText">0%</strong></div>
           <div class="bar"><i id="luxuryBar"></i></div>
+        </div>
+        <div class="progress">
+          <div class="progress-label"><span>Access Routes</span><strong id="routeText">Open</strong></div>
+          <div class="bar"><i id="routeBar"></i></div>
+        </div>
+
+        <div class="staff-card">
+          <div class="section-title"><h3>Staff</h3><span>Hire to improve operations</span></div>
+          <div id="staffMenu" class="staff-menu"></div>
         </div>
 
         <div class="objective-card">
           <h3>Objectives</h3>
           <ul id="objectives"></ul>
+        </div>
+
+        <div class="tips">
+          <strong>Controls</strong>
+          <p>Drag to move camera. Click only places if you are not dragging. Q/Esc deselects. R rotates. B toggles bulldoze. Walls, doors and windows snap to grid edges.</p>
         </div>
       </aside>
 
@@ -85,10 +90,9 @@
 
       <div id="mobileControls" class="mobile-controls">
         <button id="mobileRotate">↻</button>
-        <button id="mobileCancel">×</button>
+        <button id="mobileDeselect">×</button>
       </div>
     </div>
-
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
