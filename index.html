@@ -36,6 +36,7 @@
             <span id="selectedHint">Nothing selected</span>
           </div>
           <div id="categoryTabs" class="tabs"></div>
+          <input id="buildSearch" class="build-search" type="search" placeholder="Search build items..." />
           <div id="buildMenu" class="build-menu"></div>
         </section>
 
@@ -51,11 +52,19 @@
           <button id="loadBtn" class="secondary">Load</button>
           <button id="resetBtn" class="danger">Reset</button>
         </section>
+
+        <section class="actions compact tools-row">
+          <button id="pathToggleBtn" class="secondary">Paths</button>
+          <button id="blockedToggleBtn" class="secondary">Blocked</button>
+          <button id="focusSelectedBtn" class="secondary">Focus</button>
+          <button id="sellSelectedBtn" class="danger">Sell</button>
+        </section>
       </aside>
 
       <aside id="rightPanel" class="panel glass">
         <h2 id="inspectTitle">Blank Plot</h2>
         <p id="inspectBody">Lay floors, draw walls on grid edges, add doors/windows, then place individual gym, pool, spa and clubhouse items.</p>
+        <div id="inspectorMeta" class="inspector-meta"></div>
 
         <div class="progress">
           <div class="progress-label"><span>Cleanliness</span><strong id="cleanText">100%</strong></div>
@@ -82,7 +91,7 @@
 
         <div class="tips">
           <strong>Controls</strong>
-          <p>WASD pans the camera, Shift moves faster. Drag rotates/pans. Click places only if you are not dragging. Q/Esc deselects. R rotates. B toggles bulldoze. Doors animate as members pass through.</p>
+          <p>Drag to move camera. Click only places if you are not dragging. Q/Esc deselects. R rotates. B toggles bulldoze. WASD moves camera. Members must pass through access gates first; use Paths/Blocked to debug routes.</p>
         </div>
       </aside>
 

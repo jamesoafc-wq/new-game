@@ -1,21 +1,54 @@
-# Leisure Club Tycoon 3D
+# Leisure Club Tycoon 3D Builder v8
 
-A lightweight browser-based 3D leisure-club tycoon prototype built with Vite and Three.js.
+A browser-based blank-canvas 3D leisure club tycoon prototype.
 
-## This version
+## v8 additions
 
-This is the blank-canvas builder version. It moves away from pre-made room blocks and gives the player more customisation:
-
-- Large plot with town surroundings, roads, paths, grass, trees and facade buildings.
-- Expandable starter plot inside a larger future site.
-- Floor tiles are placed separately from equipment.
-- Walls, doors and windows snap to grid edges rather than tile centres.
-- Around 20 floor options, including gym rubber, turf, pool tile, spa stone, studio floor, cafe terrazzo and premium carpet.
-- Wall options, window options and door options.
-- Individual placeable equipment for free weights, cardio, studio, clubhouse, pool/spa and decor.
-- Free weights is now made from individual items such as dumbbell rack, bench press, squat rack, cable machine, leg press and plate tree.
-- Better visitor pathfinding using grid routes and wall/door passability.
-- Staff hiring: receptionist, cleaner, instructor, lifeguard and therapist.
+- Members now require **Access Gates** before using the club.
+- Access gates queue members one-by-one, open as they pass, and flash green.
+- Route/debug tools:
+  - show access paths
+  - show blocked tiles
+  - object reachability in the inspector
+- Improved build catalogue:
+  - compact tabs
+  - search bar
+  - outdoor section
+- Inspector upgrade:
+  - condition
+  - visits
+  - income estimate
+  - footprint
+  - reachability
+  - focus selected
+  - sell selected
+- Exterior frontage upgrades:
+  - road trees no longer spawn on roads
+  - animated cars drive past
+  - improved car models
+- Reception/cafe additions:
+  - membership kiosk
+  - logo feature wall
+  - cafe table set
+  - barista station
+  - retail display wall
+- Pool/spa additions:
+  - small spa pool
+  - family pool
+  - hydro pool
+  - large lap pool
+  - improved pool lane visuals
+- Outdoor additions:
+  - padel court
+  - tennis court
+  - sun bed pair
+  - parasol table
+  - outdoor hot tub
+  - garden yoga deck
+  - outdoor lounge
+  - fire pit seating
+  - bike rack
+  - outdoor shower
 
 ## Run locally
 
@@ -24,7 +57,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL Vite prints in the terminal.
+Then open the local URL Vite shows.
 
 ## Build
 
@@ -36,24 +69,15 @@ npm run build
 
 - Left mouse drag: rotate camera
 - Right mouse drag: pan camera
+- WASD: move around
+- Shift + WASD: move faster
 - Mouse wheel: zoom
-- Click build cards to select items
-- Click the same selected card again to deselect
-- Q or Esc: deselect
 - R: rotate selected item
-- B: bulldoze mode
-- Walls, doors and windows place on grid edges
-- Floors and equipment place on tile cells
+- Q/Esc: deselect
+- B: bulldoze
+- Paths button: show access routes
+- Blocked button: show blocked tiles
 
-## GitHub Pages
+## Important gameplay note
 
-The included workflow deploys the built `dist` folder to GitHub Pages using GitHub Actions.
-
-
-## v7 update
-
-- Sleeker compact UI layout.
-- Double doors now span two grid edges.
-- Door panels are taller and better fitted to frames.
-- Doors animate open/closed when members pass nearby.
-- Arched doorway rebuilt with a true curved arch.
+For members to properly use the club, place an entrance/door and an **Access Gates** object near the entrance. Members will arrive, queue through the gate, trigger the green access flash, and then route to the equipment.
