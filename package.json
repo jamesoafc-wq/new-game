@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leisure Club Tycoon 3D</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+      <div id="vignette"></div>
+      <aside id="hud" class="panel glass">
+        <div class="brand">
+          <div class="brand-icon">LC</div>
+          <div>
+            <h1>Leisure Club Tycoon</h1>
+            <p>Build a premium gym, spa & wellness club.</p>
+          </div>
+        </div>
+
+        <section class="stats-grid">
+          <div><span>Cash</span><strong id="cash">£0</strong></div>
+          <div><span>Members</span><strong id="members">0</strong></div>
+          <div><span>Rating</span><strong id="rating">0%</strong></div>
+          <div><span>Rep</span><strong id="rep">0</strong></div>
+          <div><span>Day</span><strong id="day">1</strong></div>
+          <div><span>Time</span><strong id="clock">06:00</strong></div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section>
+          <div class="section-title">
+            <h2>Build</h2>
+            <span id="selectedHint">Select a facility</span>
+          </div>
+          <div id="buildMenu" class="build-menu"></div>
+        </section>
+
+        <section class="actions">
+          <button id="rotateBtn" class="secondary">Rotate</button>
+          <button id="deleteBtn" class="secondary">Bulldoze</button>
+          <button id="expandBtn">Expand Plot</button>
+        </section>
+
+        <section class="actions compact">
+          <button id="saveBtn" class="secondary">Save</button>
+          <button id="loadBtn" class="secondary">Load</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </section>
+      </aside>
+
+      <aside id="inspector" class="panel glass">
+        <h2 id="inspectTitle">Welcome</h2>
+        <p id="inspectBody">Start by placing reception, then add cardio, weights, pool, sauna, studio and a juice bar. Members will visit, spend money and rate the club.</p>
+        <div class="progress">
+          <div class="progress-label"><span>Cleanliness</span><strong id="cleanText">100%</strong></div>
+          <div class="bar"><i id="cleanBar"></i></div>
+        </div>
+        <div class="progress">
+          <div class="progress-label"><span>Luxury Feel</span><strong id="luxuryText">0%</strong></div>
+          <div class="bar"><i id="luxuryBar"></i></div>
+        </div>
+        <div class="objective-card">
+          <h3>Objectives</h3>
+          <ul id="objectives"></ul>
+        </div>
+      </aside>
+
+      <div id="toast" class="toast hidden"></div>
+      <div id="mobileControls" class="mobile-controls">
+        <button id="mobileRotate">↻</button>
+        <button id="mobileCancel">×</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
