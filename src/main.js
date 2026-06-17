@@ -198,7 +198,7 @@ const state = {
   cash: 18000, members: 0, rating: 54, reputation: 0, day: 1, minute: 6*60,
   cleanliness: 100, routeScore: 100, luxury: 0,
   buildW: 24, buildH: 18, maxW: 48, maxH: 36, expansions: 0,
-  mode: 'item', category: 'floors', selectedId: 'concrete', rotation: 0, bulldoze: false,
+  mode: 'floor', category: 'floors', selectedId: 'concrete', rotation: 0, bulldoze: false,
   floors: [], edges: [], items: [], visitors: [], staff: { receptionist:0, cleaner:0, instructor:0, lifeguard:0, therapist:0 }
 };
 
@@ -219,6 +219,7 @@ let pointerDown = null;
 let isDragging = false;
 let pathCacheVersion = 0;
 let lastRouteCheck = 0;
+let simAcc = 0;
 
 initLights();
 buildEnvironment();
@@ -407,7 +408,9 @@ function canPlaceEdge(x,z,dir){
   return {ok:true};
 }
 function canPlaceItem(type,x,z,rot){
-  const def=itemDef(type); const [w,h]=rotatedSize(def,rot);
+  const def=itemDef(type);
+  if(!def) return {ok:false,reason:'Select an equipment item first'};
+  const [w,h]=rotatedSize(def,rot);
   for(let ix=x; ix<x+w; ix++) for(let iz=z; iz<z+h; iz++) if(!isUnlockedCell(ix,iz)) return {ok:false,reason:'Outside unlocked plot'};
   for(const it of state.items) if(rectOverlap(x,z,w,h,it.x,it.z,it.w,it.h)) return {ok:false,reason:'Overlaps another object'};
   if(state.cash < def.cost) return {ok:false,reason:'Not enough cash'};
@@ -416,7 +419,7 @@ function canPlaceItem(type,x,z,rot){
 function rectOverlap(ax,az,aw,ah,bx,bz,bw,bh){ return ax<bx+bw && ax+aw>bx && az<bz+bh && az+ah>bz; }
 function placeFloor(x,z){ if(!canPlaceFloor(x,z)){ toast('Floor is outside unlocked plot.'); return; } const def=floorDef(state.selectedId); if(state.cash<def.cost){ toast(`${def.name} costs ${money(def.cost)}.`); return; } const existing=state.floors.find(f=>f.x===x&&f.z===z); if(existing){ if(existing.type===def.id){ inspectThing('floor', existing.id); return; } existing.type=def.id; state.cash-=Math.round(def.cost*.45); } else { state.cash-=def.cost; state.floors.push({id:nextId++,type:def.id,x,z}); } rebuildFloors(); updateUi(true); }
 function placeEdge(type,x,z,dir){ const check=canPlaceEdge(x,z,dir); if(!check.ok){ toast(check.reason); return; } const def=edgeDef(type); if(state.cash<def.cost){ toast(`${def.name} costs ${money(def.cost)}.`); return; } state.cash-=def.cost; state.edges.push({id:nextId++,type,x,z,dir}); rebuildEdges(); pathCacheVersion++; updateUi(true); }
-function placeItem(type,x,z,rot){ const check=canPlaceItem(type,x,z,rot); if(!check.ok){ toast(check.reason); return; } const def=itemDef(type); const [w,h]=rotatedSize(def,rot); state.cash-=def.cost; const item={id:nextId++,type,x,z,w,h,rot,condition:100,visits:0}; state.items.push(item); rebuildItems(); pathCacheVersion++; inspectThing('item', item.id); updateUi(true); }
+function placeItem(type,x,z,rot){ const check=canPlaceItem(type,x,z,rot); if(!check.ok){ toast(check.reason); return; } const def=itemDef(type); if(!def){ toast('Select an equipment item first'); return; } const [w,h]=rotatedSize(def,rot); state.cash-=def.cost; const item={id:nextId++,type,x,z,w,h,rot,condition:100,visits:0}; state.items.push(item); rebuildItems(); pathCacheVersion++; inspectThing('item', item.id); updateUi(true); }
 function bulldozeAtHover(){ if(!hovered) return; if(hovered.hitKind){ removeThing(hovered.hitKind, hovered.hitId); return; } if(state.mode==='edge' && hovered.dir){ const e=state.edges.find(e=>e.x===hovered.x&&e.z===hovered.z&&e.dir===hovered.dir); if(e) removeThing('edge',e.id); return; } if(hovered.x!==undefined){ const f=state.floors.find(f=>f.x===hovered.x&&f.z===hovered.z); if(f) removeThing('floor',f.id); }}
 function removeThing(kind,id){
   if(kind==='item'){ const it=state.items.find(i=>i.id===id); if(!it) return; state.cash+=Math.round(itemDef(it.type).cost*.35); state.items=state.items.filter(i=>i.id!==id); rebuildItems(); pathCacheVersion++; toast('Object removed.'); }
@@ -532,7 +535,6 @@ function updateVisitors(dt){
 }
 function removeVisitor(v){ groups.people.remove(v.mesh); state.visitors=state.visitors.filter(x=>x!==v); }
 
-let simAcc=0;
 function updateSimulation(dt){
   state.minute += dt*5.6; if(state.minute>=1440){ state.minute-=1440; state.day++; state.items.forEach(i=>i.visits=0); }
   simAcc+=dt; if(simAcc<1) return; simAcc=0;
