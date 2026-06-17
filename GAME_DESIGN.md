@@ -1,32 +1,68 @@
 # Leisure Club Tycoon 3D - Builder Direction
 
-## Current direction
+## Design pivot
 
-The game should feel like a true blank-canvas leisure-club builder rather than a facility-block placer. The player starts with an empty plot by the road, builds their own entrance, lays floors, draws rooms with walls/windows/doors, and then places individual equipment and furniture.
+The game should feel closer to a real tycoon builder. Instead of placing full pre-made rooms, the player starts with a blank plot and creates the leisure club from parts: floors, walls, windows, doors, equipment and decor.
 
-## Key principles
+## Player fantasy
 
-- Starter plot stays at the front/road side.
-- Expansion grows sideways and backwards so the entrance can remain the entrance.
-- Floors are independent from equipment.
-- Walls, doors and windows live on grid edges, not tile centres.
-- Equipment should fit beside walls without clipping.
-- Windows should line up cleanly in rows.
-- Doors should fit their frames properly and be passable.
-- Visitors should remain visible while using equipment.
-- Visitor poses should match the object: treadmill running, bench press lying, bike riding, pool swimming, sauna sitting, shower standing, etc.
+Start with an empty town-edge plot and turn it into a premium leisure club. The long-term dream is a David Lloyd / Nuffield / private members club / resort spa style management game.
 
-## Build categories
+## Builder rules
 
-- Floors: concrete, rubber, turf, wood, stone, pool tile, changing tile, studio floor, cafe terrazzo and premium finishes.
-- Walls: internal wall, exterior wall, feature brick, slim glass wall, low divider.
-- Doors and windows: single door, double glass door, sliding door, arched doorway, standard window, wide window, full-height glass, frosted spa window, pool viewing window, clerestory window.
-- Free weights: dumbbell rack, bench press, squat rack, cable machine, leg press, adjustable bench, plate tree.
-- Cardio: treadmill, spin bike, rower, cross trainer, stair climber.
-- Studio: yoga mat, pilates reformer, mirror, speaker pod.
-- Pool and spa: pool lane, jacuzzi, sauna, steam room, shower pod, treatment bed.
-- Clubhouse/decor: reception, cafe, sofas, lockers, benches, vending, planters, art, towel stand, water feature.
+- Floors are placed tile-by-tile.
+- Equipment does not include a floor plate.
+- Walls, doors and windows snap to grid edges.
+- Doors are passable.
+- Windows and walls block movement.
+- Equipment is designed to sit next to walls without clipping into built-in floor pieces.
+- Larger plot is visible from the start but unlocked through expansions.
 
-## Long-term target
+## Categories
 
-A full 3D leisure-club builder where the player can create a building shell, customise rooms, run member flows, staff the club, expand into a multi-zone complex, and grow from a small local gym to a premium resort-style health club.
+### Floors
+About 20 options: concrete, rubber gym floors, turf, oak, walnut, spa stone, marble, slate, pool tile, sand tile, studio floor, spin floor, sports court wood, changing tile, kids foam, outdoor decking, indoor grass, cafe terrazzo and premium carpet.
+
+### Walls / Openings
+Internal walls, exterior walls, brick feature walls, glass walls, low dividers, single doors, double glass doors, sliding spa doors, arched doorways and multiple window styles.
+
+### Free weights
+Dumbbell racks, bench press, squat racks, cable machines, leg press, adjustable benches and plate trees.
+
+### Cardio
+Treadmills, spin bikes, rowers, cross trainers and stair climbers.
+
+### Studio
+Yoga mats, pilates reformers, mirrors and speaker pods.
+
+### Pool and spa
+Pool lanes, jacuzzi, sauna cabin, steam room, shower pod and treatment beds.
+
+### Clubhouse
+Reception, access gates, cafe counter, sofas, lockers, benches and vending.
+
+### Decor
+Planters, water features, wall art, towel stands and living plant walls.
+
+## Simulation direction
+
+Visitors should pathfind through doors and around equipment. If the player boxes everything in without a door, access rating should fall. Staff improve different operational layers.
+
+## Future upgrades
+
+- Proper room zoning detection.
+- Multi-floor buildings.
+- Outdoor courts and roof terraces.
+- Member archetypes with different needs.
+- Dynamic reviews and complaints.
+- Staff schedules and wages.
+- Upgradeable item variants.
+
+
+## v7 update
+
+- Sleeker compact UI layout.
+- Double doors now span two grid edges.
+- Door panels are taller and better fitted to frames.
+- Doors animate open/closed when members pass nearby.
+- Arched doorway rebuilt with a true curved arch.

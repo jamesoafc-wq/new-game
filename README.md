@@ -1,19 +1,21 @@
-# Leisure Club Tycoon 3D Builder
+# Leisure Club Tycoon 3D
 
-A browser-based 3D leisure-club tycoon prototype using Vite + Three.js.
+A lightweight browser-based 3D leisure-club tycoon prototype built with Vite and Three.js.
 
-This version is focused on a proper blank-canvas builder:
+## This version
 
-- Large plot with small-town surroundings
-- Starter plot pinned to the road/front entrance side
-- Expansions grow sideways and backwards
-- Tile-by-tile floor placement
-- Walls, doors and windows snap to grid edges
-- Individual gym/leisure/spa objects instead of pre-made room blocks
-- Staff hiring
-- Visitor pathfinding around walls, doors and objects
-- Visitor use poses/animations linked to object type
-- WASD camera movement plus OrbitControls
+This is the blank-canvas builder version. It moves away from pre-made room blocks and gives the player more customisation:
+
+- Large plot with town surroundings, roads, paths, grass, trees and facade buildings.
+- Expandable starter plot inside a larger future site.
+- Floor tiles are placed separately from equipment.
+- Walls, doors and windows snap to grid edges rather than tile centres.
+- Around 20 floor options, including gym rubber, turf, pool tile, spa stone, studio floor, cafe terrazzo and premium carpet.
+- Wall options, window options and door options.
+- Individual placeable equipment for free weights, cardio, studio, clubhouse, pool/spa and decor.
+- Free weights is now made from individual items such as dumbbell rack, bench press, squat rack, cable machine, leg press and plate tree.
+- Better visitor pathfinding using grid routes and wall/door passability.
+- Staff hiring: receptionist, cleaner, instructor, lifeguard and therapist.
 
 ## Run locally
 
@@ -22,7 +24,7 @@ npm install
 npm run dev
 ```
 
-Then open the local URL Vite prints.
+Open the local URL Vite prints in the terminal.
 
 ## Build
 
@@ -32,18 +34,26 @@ npm run build
 
 ## Controls
 
-- Left drag: rotate camera
-- Right drag: pan camera
+- Left mouse drag: rotate camera
+- Right mouse drag: pan camera
 - Mouse wheel: zoom
-- WASD: move camera around the plot
-- Shift + WASD: move faster
-- R: rotate selected object
-- Q / Esc: deselect
+- Click build cards to select items
+- Click the same selected card again to deselect
+- Q or Esc: deselect
+- R: rotate selected item
 - B: bulldoze mode
-- Click build cards to choose floors, edge pieces or objects
 - Walls, doors and windows place on grid edges
-- Objects and floors place in grid cells
+- Floors and equipment place on tile cells
 
-## Notes
+## GitHub Pages
 
-This is still a prototype. The aim is to move the game away from pre-made facility blocks and towards true leisure club customisation: the player lays flooring, draws rooms, places windows/doors, and designs detailed gym, spa, pool and clubhouse areas from individual pieces.
+The included workflow deploys the built `dist` folder to GitHub Pages using GitHub Actions.
+
+
+## v7 update
+
+- Sleeker compact UI layout.
+- Double doors now span two grid edges.
+- Door panels are taller and better fitted to frames.
+- Doors animate open/closed when members pass nearby.
+- Arched doorway rebuilt with a true curved arch.
