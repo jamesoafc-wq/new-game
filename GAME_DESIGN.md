@@ -1,59 +1,32 @@
 # Leisure Club Tycoon 3D - Builder Direction
 
-## Design pivot
+## Design direction
 
-The game should feel closer to a real tycoon builder. Instead of placing full pre-made rooms, the player starts with a blank plot and creates the leisure club from parts: floors, walls, windows, doors, equipment and decor.
+The game should feel like a blank-canvas leisure club builder rather than a prefab facility placer. The player should design the building shell, rooms, floors, openings, equipment zones and decorative spaces themselves.
 
-## Player fantasy
+## Current priorities
 
-Start with an empty town-edge plot and turn it into a premium leisure club. The long-term dream is a David Lloyd / Nuffield / private members club / resort spa style management game.
+- The starter plot sits at the front of the site, next to the road/path entrance.
+- Expansions grow sideways and backwards so the player can keep a front entrance and facade.
+- Floors are separate from equipment.
+- Walls, doors and windows sit on grid edges, not tile centres.
+- Equipment is individual and should sit cleanly beside walls.
+- Free weights, cardio, pool/spa and clubhouse areas should be built from individual objects.
+- Visitors should pathfind around objects, respect blocking walls/windows, pass through doors and visually use objects rather than disappearing.
 
-## Builder rules
+## Building categories
 
-- Floors are placed tile-by-tile.
-- Equipment does not include a floor plate.
-- Walls, doors and windows snap to grid edges.
-- Doors are passable.
-- Windows and walls block movement.
-- Equipment is designed to sit next to walls without clipping into built-in floor pieces.
-- Larger plot is visible from the start but unlocked through expansions.
+- Floors: gym rubber, turf, spa stone, marble, pool tile, studio floor, cafe terrazzo, decking and more.
+- Walls: internal, exterior, brick feature, slim glass, low divider.
+- Doors/windows: single, double glass, sliding, arched, standard, wide, full-height, frosted, pool-viewing and high clerestory.
+- Equipment: free weights, cardio, studio, pool/spa, clubhouse and decor.
+- Staff: receptionist, cleaner, instructor, lifeguard and therapist.
 
-## Categories
+## Next design goals
 
-### Floors
-About 20 options: concrete, rubber gym floors, turf, oak, walnut, spa stone, marble, slate, pool tile, sand tile, studio floor, spin floor, sports court wood, changing tile, kids foam, outdoor decking, indoor grass, cafe terrazzo and premium carpet.
-
-### Walls / Openings
-Internal walls, exterior walls, brick feature walls, glass walls, low dividers, single doors, double glass doors, sliding spa doors, arched doorways and multiple window styles.
-
-### Free weights
-Dumbbell racks, bench press, squat racks, cable machines, leg press, adjustable benches and plate trees.
-
-### Cardio
-Treadmills, spin bikes, rowers, cross trainers and stair climbers.
-
-### Studio
-Yoga mats, pilates reformers, mirrors and speaker pods.
-
-### Pool and spa
-Pool lanes, jacuzzi, sauna cabin, steam room, shower pod and treatment beds.
-
-### Clubhouse
-Reception, access gates, cafe counter, sofas, lockers, benches and vending.
-
-### Decor
-Planters, water features, wall art, towel stands and living plant walls.
-
-## Simulation direction
-
-Visitors should pathfind through doors and around equipment. If the player boxes everything in without a door, access rating should fall. Staff improve different operational layers.
-
-## Future upgrades
-
-- Proper room zoning detection.
-- Multi-floor buildings.
-- Outdoor courts and roof terraces.
-- Member archetypes with different needs.
-- Dynamic reviews and complaints.
-- Staff schedules and wages.
-- Upgradeable item variants.
+- Drag-to-place walls/floors rather than one click at a time.
+- Room zoning and room labels.
+- Better member archetypes and route preferences.
+- Actual staff movement and task assignments.
+- More realistic facility requirements: lifeguards for pools, therapists for spa income, instructors for classes.
+- Exterior facade tools, signage and car park design.
