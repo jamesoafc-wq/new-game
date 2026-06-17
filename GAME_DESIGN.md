@@ -1,32 +1,32 @@
 # Leisure Club Tycoon 3D - Builder Direction
 
-## Design direction
+## Current direction
 
-The game should feel like a blank-canvas leisure club builder rather than a prefab facility placer. The player should design the building shell, rooms, floors, openings, equipment zones and decorative spaces themselves.
+The game should feel like a true blank-canvas leisure-club builder rather than a facility-block placer. The player starts with an empty plot by the road, builds their own entrance, lays floors, draws rooms with walls/windows/doors, and then places individual equipment and furniture.
 
-## Current priorities
+## Key principles
 
-- The starter plot sits at the front of the site, next to the road/path entrance.
-- Expansions grow sideways and backwards so the player can keep a front entrance and facade.
-- Floors are separate from equipment.
-- Walls, doors and windows sit on grid edges, not tile centres.
-- Equipment is individual and should sit cleanly beside walls.
-- Free weights, cardio, pool/spa and clubhouse areas should be built from individual objects.
-- Visitors should pathfind around objects, respect blocking walls/windows, pass through doors and visually use objects rather than disappearing.
+- Starter plot stays at the front/road side.
+- Expansion grows sideways and backwards so the entrance can remain the entrance.
+- Floors are independent from equipment.
+- Walls, doors and windows live on grid edges, not tile centres.
+- Equipment should fit beside walls without clipping.
+- Windows should line up cleanly in rows.
+- Doors should fit their frames properly and be passable.
+- Visitors should remain visible while using equipment.
+- Visitor poses should match the object: treadmill running, bench press lying, bike riding, pool swimming, sauna sitting, shower standing, etc.
 
-## Building categories
+## Build categories
 
-- Floors: gym rubber, turf, spa stone, marble, pool tile, studio floor, cafe terrazzo, decking and more.
-- Walls: internal, exterior, brick feature, slim glass, low divider.
-- Doors/windows: single, double glass, sliding, arched, standard, wide, full-height, frosted, pool-viewing and high clerestory.
-- Equipment: free weights, cardio, studio, pool/spa, clubhouse and decor.
-- Staff: receptionist, cleaner, instructor, lifeguard and therapist.
+- Floors: concrete, rubber, turf, wood, stone, pool tile, changing tile, studio floor, cafe terrazzo and premium finishes.
+- Walls: internal wall, exterior wall, feature brick, slim glass wall, low divider.
+- Doors and windows: single door, double glass door, sliding door, arched doorway, standard window, wide window, full-height glass, frosted spa window, pool viewing window, clerestory window.
+- Free weights: dumbbell rack, bench press, squat rack, cable machine, leg press, adjustable bench, plate tree.
+- Cardio: treadmill, spin bike, rower, cross trainer, stair climber.
+- Studio: yoga mat, pilates reformer, mirror, speaker pod.
+- Pool and spa: pool lane, jacuzzi, sauna, steam room, shower pod, treatment bed.
+- Clubhouse/decor: reception, cafe, sofas, lockers, benches, vending, planters, art, towel stand, water feature.
 
-## Next design goals
+## Long-term target
 
-- Drag-to-place walls/floors rather than one click at a time.
-- Room zoning and room labels.
-- Better member archetypes and route preferences.
-- Actual staff movement and task assignments.
-- More realistic facility requirements: lifeguards for pools, therapists for spa income, instructors for classes.
-- Exterior facade tools, signage and car park design.
+A full 3D leisure-club builder where the player can create a building shell, customise rooms, run member flows, staff the club, expand into a multi-zone complex, and grow from a small local gym to a premium resort-style health club.

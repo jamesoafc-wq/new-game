@@ -1,21 +1,19 @@
 # Leisure Club Tycoon 3D Builder
 
-A browser-based 3D leisure club tycoon prototype focused on blank-canvas building.
+A browser-based 3D leisure-club tycoon prototype using Vite + Three.js.
 
-## What this version adds
+This version is focused on a proper blank-canvas builder:
 
-- Starter plot is pinned to the front road side so the entrance can stay at the front.
-- Expansion grows sideways and backwards, not in front of the club.
-- Larger surrounding town plot with roads, paths, grass, trees, facade buildings, cars and street furniture.
-- Walls, doors and windows snap to grid edges.
-- Slim glass wall option that is thinner than solid walls.
-- More window variety, including taller, full-height, frosted, pool-viewing and clerestory windows.
-- Seamless floor tiles with no visible gaps between each tile.
-- Equipment no longer includes built-in floor pads.
-- More detailed equipment models.
-- Equipment is grounded to the floor so objects should no longer float.
-- Visitors no longer disappear when using items; they pause and animate/pose at cardio, weights, studio, pool/spa and clubhouse objects.
-- Staff hiring and better pathfinding retained.
+- Large plot with small-town surroundings
+- Starter plot pinned to the road/front entrance side
+- Expansions grow sideways and backwards
+- Tile-by-tile floor placement
+- Walls, doors and windows snap to grid edges
+- Individual gym/leisure/spa objects instead of pre-made room blocks
+- Staff hiring
+- Visitor pathfinding around walls, doors and objects
+- Visitor use poses/animations linked to object type
+- WASD camera movement plus OrbitControls
 
 ## Run locally
 
@@ -24,7 +22,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL Vite prints, usually `http://localhost:5173/`.
+Then open the local URL Vite prints.
 
 ## Build
 
@@ -37,9 +35,15 @@ npm run build
 - Left drag: rotate camera
 - Right drag: pan camera
 - Mouse wheel: zoom
-- Click a build card, then click the plot to place it
-- Walls, doors and windows place on grid edges
-- R: rotate selected equipment
-- B: bulldoze mode
+- WASD: move camera around the plot
+- Shift + WASD: move faster
+- R: rotate selected object
 - Q / Esc: deselect
-- Save/load uses browser localStorage
+- B: bulldoze mode
+- Click build cards to choose floors, edge pieces or objects
+- Walls, doors and windows place on grid edges
+- Objects and floors place in grid cells
+
+## Notes
+
+This is still a prototype. The aim is to move the game away from pre-made facility blocks and towards true leisure club customisation: the player lays flooring, draws rooms, places windows/doors, and designs detailed gym, spa, pool and clubhouse areas from individual pieces.
